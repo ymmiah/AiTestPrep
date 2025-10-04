@@ -1,0 +1,7 @@
+{
+  "name": "UK Spouse Visa A2 English Test Prep",
+  "description": "An AI-powered application to help users prepare for the UK Spouse Visa A2 English test. It features a conversational simulator with real-time feedback, powered by Google Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
