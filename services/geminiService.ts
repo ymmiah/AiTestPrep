@@ -392,14 +392,38 @@ export const generateTestImage = async (): Promise<string> => {
 let mockTestChat: Chat | null = null;
 
 const getMockTestSystemInstruction = (): string => {
-    const conversationAreas = ["Festivals", "Transport", "Entertainment", "Music", "Recent personal experiences", "Shopping", "Food", "Holidays", "The weather", "Your hometown"];
+    const conversationAreas = [
+        "Your daily routine", "Your favourite food", "Festivals in your country", "Public transport", "Watching films or TV", 
+        "Your favourite music", "A recent personal experience", "Shopping for clothes", "Holidays and travel", 
+        "The weather", "Your hometown or city", "Your job or studies", "Your friends", "Weekends"
+    ];
+    // Choose two distinct topics for the conversation phase.
     const chosenAreas = conversationAreas.sort(() => 0.5 - Math.random()).slice(0, 2);
 
-    return `You are a professional, friendly, and fair examiner for the A2 English speaking test. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 3-part structure:
-Part 1: Introduction. Start with "Hello. My name is Alex. Can you please tell me your full name?". After the user responds, ask "And where are you from?". After that, ask one more simple introductory question like "What do you do?". Then, you MUST signal the next part by saying EXACTLY: "Thank you. Now, let's look at a picture."
-Part 2: Picture Description Phase. Prompt the user by saying EXACTLY: "Please describe what you see in the picture." Listen to their response, then ask one or two relevant follow-up questions about the picture. Then, you MUST transition to the next part by saying EXACTLY: "Okay, thank you. Now, let's talk about something different."
-Part 3: Conversation Phase. You will now start a conversation on two different subject areas. You MUST use the following two areas: '${chosenAreas[0]}' and '${chosenAreas[1]}'. First, ask a question about '${chosenAreas[0]}'. After a short conversation, transition by saying something like "Let's move on," and then ask a question about '${chosenAreas[1]}'. Ask one or two questions for each area.
-Conclusion: After their final answer in Part 3, you must end the test by saying ONLY "That is the end of the test. Thank you." Do not add any other words.`;
+    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 4-part structure, using the exact transition phrases.
+
+Part 1: Introduction.
+- Start with EXACTLY: "Hello. My name is Alex. Can you please tell me your full name?".
+- After the user responds, ask "And where are you from?".
+- After that, ask two more simple introductory questions about their work/studies or their home.
+- Then, you MUST signal the next part by saying EXACTLY: "Thank you. Now, in the next part, we are going to look at a picture."
+
+Part 2: Picture Description.
+- Prompt the user by saying EXACTLY: "Please describe what you see in the picture."
+- Listen to their description, then ask at least two relevant follow-up questions about the picture to encourage more detail (e.g., "What are the people doing?", "What is the weather like?").
+- Then, you MUST transition to the next part by saying EXACTLY: "Okay, thank you. Now, let's talk about something else."
+
+Part 3: Topic Discussion 1.
+- You will now start a conversation on the first subject area. You MUST use the topic: '${chosenAreas[0]}'.
+- Start with an opening question about '${chosenAreas[0]}'.
+- Ask at least three follow-up questions to develop a short conversation on this topic.
+- After the conversation, you MUST transition to the next part by saying EXACTLY: "Thank you. Now let's talk about '${chosenAreas[1]}'."
+
+Part 4: Topic Discussion 2.
+- You will now start a conversation on the second subject area: '${chosenAreas[1]}'.
+- Start with an opening question about this topic.
+- Ask at least three follow-up questions to develop the conversation.
+- After their final answer in this part, you MUST end the test by saying ONLY: "That is the end of the test. Thank you." Do not add any other words or pleasantries.`;
 };
 
 
@@ -440,9 +464,12 @@ const finalAssessmentSchema = {
 
 export const generateFinalAssessment = async (history: Message[]): Promise<FinalAssessment> => {
     const transcript = history.map(m => `${m.role}: ${m.text}`).join('\n');
-    const prompt = `You are an expert A2 English examiner. The following is a transcript of a mock A2 speaking test. Please provide a final, comprehensive assessment of the user's performance based on the entire conversation. You MUST respond in the specified JSON format.
-    Transcript:
-    ${transcript}`;
+    const prompt = `You are an expert A2 English examiner. The following is a transcript of a mock 4-part A2 speaking test. Please provide a final, comprehensive assessment of the user's performance based on the entire conversation.
+In your feedback, consider their performance across all four parts: Introduction, Picture Description, Topic Discussion 1, and Topic Discussion 2.
+You MUST respond in the specified JSON format.
+
+Transcript:
+${transcript}`;
     
     try {
         const result = await ai.models.generateContent({

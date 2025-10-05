@@ -12,10 +12,11 @@ import { Chat } from '@google/genai';
 import SkeletonLoader from './SkeletonLoader';
 
 const TEST_DURATION_SECONDS = 420; // 7 minutes
+type TestPart = 'intro' | 'picture' | 'topic1' | 'topic2';
 
 const MockTest: React.FC = () => {
     const [testStep, setTestStep] = useState<'idle' | 'running' | 'finished'>('idle');
-    const [testPart, setTestPart] = useState<'intro' | 'picture' | 'conversation'>('intro');
+    const [testPart, setTestPart] = useState<TestPart>('intro');
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isImageLoading, setIsImageLoading] = useState(false);
     const [timeLeft, setTimeLeft] = useState(TEST_DURATION_SECONDS);
@@ -124,11 +125,14 @@ const MockTest: React.FC = () => {
             const modelText = result.text.trim();
             
             // Part transition logic
-            if (modelText.includes("Now, let's look at a picture.")) {
+            if (modelText.includes("we are going to look at a picture.")) {
                 setTestPart('picture');
-            } else if (modelText.includes("Now, let's talk about something different.")) {
-                setTestPart('conversation');
+            } else if (modelText.includes("Now, let's talk about something else.")) {
+                setTestPart('topic1');
+            } else if (modelText.startsWith("Thank you. Now let's talk about")) {
+                setTestPart('topic2');
             }
+
 
             if (modelText.toLowerCase().includes("that is the end of the test")) {
                 const modelMessage: Message = { role: Role.MODEL, text: modelText };
@@ -153,10 +157,11 @@ const MockTest: React.FC = () => {
 
     const isAiTurn = isProcessing || isSpeaking;
     
-    const partTitles: { [key in typeof testPart]: string } = {
+    const partTitles: { [key in TestPart]: string } = {
         intro: 'Part 1: Introduction',
         picture: 'Part 2: Picture Description',
-        conversation: 'Part 3: Conversation',
+        topic1: 'Part 3: Topic Discussion',
+        topic2: 'Part 4: Topic Discussion',
     };
 
     const renderIdleView = () => (
