@@ -322,7 +322,7 @@ export const getImprovedAnswer = async (
     try {
         const result = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `An A2 English level user gave this answer: "${userTranscript}" to the question: "${lastModelQuestion}". Provide an improved, more natural, and grammatically correct version of their answer. Keep the core idea of their answer the same. Present only the improved answer text, without any extra explanations like "Here is an improved version:".`,
+            contents: `An A2 English level user gave this answer: "${userTranscript}" to the question: "${lastModelQuestion}". Carefully provide an improved, more natural, and grammatically correct version of their answer. Your goal is to help them sound more fluent, not to change their original meaning. Keep the core idea of their answer the same. Present ONLY the improved answer text, without any extra explanations like "Here is an improved version:".`,
         });
         return result.text.trim();
     } catch (error) {
@@ -400,12 +400,12 @@ const getMockTestSystemInstruction = (): string => {
     // Choose two distinct topics for the conversation phase.
     const chosenAreas = conversationAreas.sort(() => 0.5 - Math.random()).slice(0, 2);
 
-    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 4-part structure, using the exact transition phrases.
+    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm, giving the user time to think without rushing them. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 4-part structure, using the exact transition phrases.
 
 Part 1: Introduction.
 - Start with EXACTLY: "Hello. My name is Alex. Can you please tell me your full name?".
 - After the user responds, ask "And where are you from?".
-- After that, ask two more simple introductory questions about their work/studies or their home.
+- After that, ask two more simple introductory questions to get to know them. These questions should naturally follow from their previous answers. For example, you could ask about their home, family, work, or studies, but be flexible and adapt to what they say.
 - Then, you MUST signal the next part by saying EXACTLY: "Thank you. Now, in the next part, we are going to look at a picture."
 
 Part 2: Picture Description.
