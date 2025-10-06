@@ -3,7 +3,7 @@ import { getUserProfile } from '../services/geminiService';
 import { UserProfile } from '../types';
 import { View } from '../App';
 import SkeletonLoader from './SkeletonLoader';
-import { ChatBubbleIcon, SoundWaveIcon, CardStackIcon, HeadphonesIcon, SparklesIcon } from './IconComponents';
+import { ChatBubbleIcon, SoundWaveIcon, CardStackIcon, HeadphonesIcon, SparklesIcon, ClipboardDocumentCheckIcon } from './IconComponents';
 
 interface DashboardProps {
   setActiveView: (view: View) => void;
@@ -103,6 +103,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
                 {user.name ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <QuickLink title="Start Conversation Practice" description="Talk with the AI examiner." onClick={() => setActiveView('simulator')} />
+                        <QuickLink title="Take a Mock Exam" description="Simulate the full 7-minute test." onClick={() => setActiveView('mockTest')} />
+                        <QuickLink title="Practice Pronunciation" description="Get feedback on specific phrases." onClick={() => setActiveView('pronunciation')} />
                         <QuickLink title="Learn New Words" description="Review your vocabulary flashcards." onClick={() => setActiveView('vocabulary')} />
                         <QuickLink title="Test Your Grammar" description="Take a quick quiz." onClick={() => setActiveView('grammar')} />
                         <QuickLink title="Practice Listening" description="Complete a listening exercise." onClick={() => setActiveView('listening')} />

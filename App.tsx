@@ -15,8 +15,9 @@ import MockTest from './components/MockTest';
 import NotificationContainer from './components/NotificationContainer';
 import { NotificationContext } from './contexts/NotificationContext';
 import { Notification, NotificationAction } from './types';
+import PronunciationPractice from './components/PronunciationPractice';
 
-export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topics' | 'profile' | 'leaderboard' | 'mockTest';
+export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topics' | 'profile' | 'leaderboard' | 'mockTest' | 'pronunciation';
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState(() => {
@@ -81,6 +82,8 @@ const App: React.FC = () => {
         return <ListeningPractice />;
       case 'grammar':
         return <GrammarHub />;
+      case 'pronunciation':
+        return <PronunciationPractice />;
        case 'mockTest':
         return <MockTest />;
       case 'planner':
@@ -102,6 +105,7 @@ const App: React.FC = () => {
     vocabulary: 'Vocabulary Builder',
     listening: 'Listening Practice',
     grammar: 'Grammar Hub',
+    pronunciation: 'Pronunciation Practice',
     mockTest: 'Mock A2 Exam',
     planner: 'Study Planner',
     topics: 'Topic Generator',

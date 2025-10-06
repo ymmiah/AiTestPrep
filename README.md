@@ -24,13 +24,14 @@ The application is a comprehensive toolkit with modules targeting every aspect o
 ### Full Mock A2 Exam
 
 *   **Timed Simulation:** A full, 7-minute timed simulation of the official speaking test.
-*   **Structured Format:** Follows the official 3-part structure: Introduction, Picture Description, and Conversation.
+*   **Structured Format:** Follows a comprehensive 4-part structure: a personal Introduction, a detailed Picture Description, and two distinct Topic-based Conversations.
 *   **AI-Generated Imagery:** Uses the Gemini Image Generation API to create a unique, random picture for the description task in each test.
 *   **Final Assessment:** At the end of the test, Gemini provides a comprehensive final assessment, including an overall score, detailed feedback, strengths, and areas for improvement.
 *   **Transcript Review:** Users can review the full transcript of their mock test, with the option to get AI-powered improvements for each of their answers.
 
 ### Comprehensive Skill Development Modules
 
+*   **Pronunciation Practice:** A dedicated module where the AI generates short, common English phrases. Users can practice saying these phrases and receive immediate, word-by-word feedback on their pronunciation, helping them master specific sounds.
 *   **Vocabulary Builder:** An interactive flashcard system using a Spaced Repetition System (SRS) to help users learn and memorize new English words efficiently.
 *   **Listening Practice:** Dedicated exercises with mock audio recordings and multiple-choice comprehension questions to sharpen listening skills.
 *   **Grammar Hub:** A two-part module featuring:
@@ -105,13 +106,24 @@ This guide is for developers and users who want to deploy their own version of t
 
 ### A. Configuring Your Google Gemini API Key
 
-**IMPORTANT:** This application requires a Google Gemini API key to function. The application is designed to securely access this key. You should never write your API key directly into the application's source code files like `geminiService.ts`.
+**IMPORTANT:** This application requires a Google Gemini API key to function.
 
 **1. Get Your API Key:**
 *   Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to create your free API key.
 
-**2. Making the Key Available for Local Development:**
-To run the app on your local machine, you need to provide the API key. We've made this easy with a special configuration file.
+**2. Providing Your API Key**
+There are two ways to provide your key:
+
+**Method 1: Via the Application UI (Recommended for Users)**
+The easiest way to add your key is directly in the application.
+1.  Launch the application.
+2.  Navigate to the **My Profile** page.
+3.  Scroll down to the "API Key Configuration" section.
+4.  Paste your API key into the input field and click "Save & Reload".
+Your key will be stored securely in your browser's local storage for future use. This key will take priority over any other configuration method.
+
+**Method 2: For Local Development (Developer Use)**
+If you are developing the application, you can use a special configuration file to provide a key. This is useful for testing but will be overridden if a key is set via the UI.
 
 **Step 1: Create a `config.js` file**
 In the same root directory as `index.html`, create a new file named `config.js`.
@@ -126,8 +138,6 @@ window.process = {
 };
 ```
 **Security Note:** Do not commit this `config.js` file to public version control (e.g., GitHub). If you are using Git, add `config.js` to your `.gitignore` file.
-
-That's it! When you run your local server, the application will automatically detect and use this key. If the key is missing, you will see an alert in the browser.
 
 *   **For Deployment (e.g., on Vercel, Netlify):**
     When you deploy this application to a modern hosting platform, you can set "Environment Variables" in the project settings.

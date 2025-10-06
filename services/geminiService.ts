@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -7,6 +7,27 @@ import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai'
 // this would be in its own file (e.g., userService.ts).
 
 const USER_PROFILE_KEY = 'userProfileData';
+const USER_API_KEY_KEY = 'gemini_api_key';
+
+// --- Helper function for API errors ---
+const getApiErrorMessage = (error: unknown, defaultMessage: string): string => {
+    console.error("Gemini API Error:", error);
+    // Stringify the error to safely search for keywords, regardless of its original type.
+    const errorString = (typeof error === 'string' ? error : JSON.stringify(error)).toLowerCase();
+
+    if (errorString.includes('quota') || errorString.includes('resource_exhausted')) {
+        return "API Error: You have exceeded your usage quota. Please check your Google AI account or try again later.";
+    }
+    if (errorString.includes('api key not valid')) {
+        return "API Error: Your API key is not valid. Please check the key in your profile or config file.";
+    }
+    if (errorString.includes('safety')) {
+        return "The response was blocked due to safety settings. Please modify your prompt and try again.";
+    }
+    
+    return defaultMessage;
+};
+
 
 // Define unlockable badges
 export const BADGES: { [key: string]: Badge } = {
@@ -145,38 +166,57 @@ export const clearConversationHistory = async (scenario: string): Promise<void> 
 // --- Gemini API Integration for Conversational AI ---
 
 /**
- * Retrieves the Gemini API key.
- * It first checks for a build-time environment variable (`process.env.API_KEY`),
- * then falls back to a runtime configuration via a `config.js` file (`window.process.env.API_KEY`).
- * This provides flexibility for both deployment and easy local development.
+ * Checks if a user has provided their own API key in local storage.
+ * @returns {boolean} True if a key is set, false otherwise.
+ */
+export const isApiKeySet = (): boolean => {
+    return !!localStorage.getItem(USER_API_KEY_KEY);
+};
+
+/**
+ * Saves a user-provided API key to local storage and reloads the page.
+ * Reloading ensures the Gemini client is re-initialized with the new key.
+ * @param {string} key The API key to save.
+ */
+export const setApiKey = (key: string): void => {
+    if (key.trim()) {
+        localStorage.setItem(USER_API_KEY_KEY, key.trim());
+    } else {
+        localStorage.removeItem(USER_API_KEY_KEY);
+    }
+    // Reload the application to re-initialize the Gemini client with the new key.
+    window.location.reload();
+};
+
+
+/**
+ * Retrieves the Gemini API key, following a specific priority order to ensure
+ * user-provided keys are always used first.
  * @returns {string} The API key.
- * @throws {Error} If the API key is not found in either location.
+ * @throws {Error} If no API key can be found in any of the potential locations.
  */
 const getApiKey = (): string => {
-    let key: string | undefined;
-
-    // This construct is used to safely check for `process.env` without causing a ReferenceError
-    // in a pure browser environment.
-    try {
-        if (process.env.API_KEY) {
-            key = process.env.API_KEY;
-        }
-    } catch (e) {
-        // `process` is not defined, which is expected in a browser-only context.
+    // Priority 1: User-provided key from browser's local storage.
+    const userKey = localStorage.getItem(USER_API_KEY_KEY);
+    if (userKey) {
+        return userKey;
     }
 
-    // Fallback for local development using a `config.js` file.
-    if (!key && (window as any).process?.env?.API_KEY) {
-        key = (window as any).process.env.API_KEY;
+    // Priority 2: Key from a Node.js-like environment (e.g., deployment variable).
+    // This is a safer check than a try-catch block for detecting the 'process' object.
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+        return process.env.API_KEY;
+    }
+    
+    // Priority 3: Key from a `config.js` file for local browser development.
+    if ((window as any).process?.env?.API_KEY) {
+        return (window as any).process.env.API_KEY;
     }
 
-    if (!key) {
-        const message = "API Key not found. For local development, please create a `config.js` file in the root directory with your key. See the README.md for setup instructions.";
-        alert(message); // Provide a clear message to the developer in the browser.
-        throw new Error(message);
-    }
-
-    return key;
+    // If no key is found, throw an error.
+    const message = "API Key not found. Please add your key in the Profile page, or for local development, create a `config.js` file. See the README for setup instructions.";
+    alert(message); // Provide a clear message to the developer in the browser.
+    throw new Error(message);
 };
 
 const ai = new GoogleGenAI({ apiKey: getApiKey() });
@@ -278,10 +318,10 @@ export const getGeminiResponse = async (
     return sanitizedResponse;
 
   } catch (error) {
-    console.error("Error processing Gemini response:", error);
+    const userFriendlyMessage = getApiErrorMessage(error, "Sorry, I encountered an error. Could you please repeat that?");
     // Provide a graceful fallback response if the API call fails or JSON is malformed
     return {
-        response: "Sorry, I encountered an error. Could you please repeat that?",
+        response: userFriendlyMessage,
         feedback: {
             grammar: "Error processing feedback.",
             vocabulary: "Error processing feedback.",
@@ -307,8 +347,7 @@ export const generateAnswerIdea = async (
         });
         return result.text.trim();
     } catch (error) {
-        console.error("Error generating answer idea:", error);
-        return "Sorry, I couldn't generate an idea right now. Please try again.";
+        return getApiErrorMessage(error, "Sorry, I couldn't generate an idea right now. Please try again.");
     }
 };
 
@@ -326,10 +365,103 @@ export const getImprovedAnswer = async (
         });
         return result.text.trim();
     } catch (error) {
-        console.error("Error generating improved answer:", error);
-        return "Sorry, I couldn't generate a suggestion right now. Please try again.";
+        return getApiErrorMessage(error, "Sorry, I couldn't generate a suggestion right now. Please try again.");
     }
 };
+
+// --- Pronunciation Practice Service Functions ---
+
+const pronunciationFeedbackSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overallFeedback: {
+            type: Type.STRING,
+            description: "Provide a 1-2 sentence summary of the user's pronunciation. Be encouraging and focus on A2 level."
+        },
+        wordAnalysis: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    word: {
+                        type: Type.STRING,
+                        description: "The specific word from the original phrase."
+                    },
+                    isCorrect: {
+                        type: Type.BOOLEAN,
+                        description: "True if the user's pronunciation of this word seems correct based on the transcript, false otherwise."
+                    },
+                    feedback: {
+                        type: Type.STRING,
+                        description: "Provide a very short, specific tip if the word was likely mispronounced, or a brief 'Good!' if it was correct."
+                    }
+                },
+                required: ["word", "isCorrect", "feedback"]
+            }
+        }
+    },
+    required: ["overallFeedback", "wordAnalysis"]
+};
+
+export const getPronunciationFeedback = async (
+  targetPhrase: string,
+  userTranscript: string
+): Promise<PronunciationFeedback> => {
+  const prompt = `You are an expert British English pronunciation coach for A2 level learners.
+The user was asked to say the following target phrase:
+"${targetPhrase}"
+
+The user's speech was transcribed as:
+"${userTranscript}"
+
+Analyze the user's transcript and compare it to the target phrase. Provide feedback on their pronunciation. Your analysis should be based on the differences between the two strings, inferring likely pronunciation errors (e.g., if 'three' was transcribed as 'tree', the user likely has trouble with the 'th' sound).
+
+You MUST respond in the specified JSON format. For the 'wordAnalysis', provide an entry for EVERY word in the original target phrase.`;
+
+  try {
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: pronunciationFeedbackSchema,
+      }
+    });
+
+    const jsonString = result.text.trim();
+    const parsed = JSON.parse(jsonString) as PronunciationFeedback;
+
+    // Basic validation
+    if (!parsed.overallFeedback || !parsed.wordAnalysis) {
+      throw new Error("Invalid feedback format from API.");
+    }
+    return parsed;
+  } catch (error) {
+    const errorMessage = getApiErrorMessage(error, "Could not generate pronunciation feedback.");
+    return {
+      overallFeedback: errorMessage,
+      wordAnalysis: targetPhrase.split(' ').map(word => ({
+          word,
+          isCorrect: false,
+          feedback: "Analysis failed."
+      }))
+    };
+  }
+};
+
+export const generatePracticePhrase = async (): Promise<string> => {
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: "Generate one short, common English sentence that would be good for an A2-level student to practice pronunciation. The sentence should contain a mix of sounds. For example: 'I think I'll have a glass of water.' Do not include quotation marks or any other text in your response.",
+        });
+        return result.text.trim().replace(/"/g, ''); // Clean up any quotes
+    } catch (error) {
+        console.error("Failed to generate practice phrase:", error);
+        return "The quick brown fox jumps over the lazy dog."; // Fallback phrase
+    }
+};
+
 
 // --- Mock Test Service Functions ---
 
@@ -383,7 +515,8 @@ export const generateTestImage = async (): Promise<string> => {
         throw new Error("API returned no images.");
 
     } catch (error) {
-        console.error("Error generating test image with Gemini:", error);
+        const errorMessage = getApiErrorMessage(error, "An unknown error occurred during image generation.");
+        console.error(`Gemini image generation failed: ${errorMessage}. Using fallback image.`);
         // Fallback to a static image URL if generation fails
         return "https://images.unsplash.com/photo-1528740561666-dc2479703592?q=80&w=1470&auto=format&fit=crop";
     }
@@ -400,28 +533,26 @@ const getMockTestSystemInstruction = (): string => {
     // Choose two distinct topics for the conversation phase.
     const chosenAreas = conversationAreas.sort(() => 0.5 - Math.random()).slice(0, 2);
 
-    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm, giving the user time to think without rushing them. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 4-part structure, using the exact transition phrases.
+    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm, giving the user time to think without rushing them. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 4-part structure. IMPORTANT: You must wait for the user to respond after you announce a transition to a new part before you ask the first question of that new part.
 
 Part 1: Introduction.
 - Start with EXACTLY: "Hello. My name is Alex. Can you please tell me your full name?".
 - After the user responds, ask "And where are you from?".
 - After that, ask two more simple introductory questions to get to know them. These questions should naturally follow from their previous answers. For example, you could ask about their home, family, work, or studies, but be flexible and adapt to what they say.
-- Then, you MUST signal the next part by saying EXACTLY: "Thank you. Now, in the next part, we are going to look at a picture."
+- To transition to Part 2, you MUST end your response with ONLY: "Thank you. Now, in the next part, we are going to look at a picture."
 
 Part 2: Picture Description.
-- Prompt the user by saying EXACTLY: "Please describe what you see in the picture."
+- After the user acknowledges the transition (e.g., they say "okay"), your next response MUST be to ask them to describe the picture. For example: "Please describe what you see in the picture."
 - Listen to their description, then ask at least two relevant follow-up questions about the picture to encourage more detail (e.g., "What are the people doing?", "What is the weather like?").
-- Then, you MUST transition to the next part by saying EXACTLY: "Okay, thank you. Now, let's talk about something else."
+- To transition to Part 3, you MUST end your response with ONLY: "Okay, thank you. Now, let's talk about ${chosenAreas[0]}."
 
 Part 3: Topic Discussion 1.
-- You will now start a conversation on the first subject area. You MUST use the topic: '${chosenAreas[0]}'.
-- Start with an opening question about '${chosenAreas[0]}'.
+- After the user acknowledges the transition, you will begin the conversation on the first subject area: '${chosenAreas[0]}'. Ask your first question on this topic.
 - Ask at least three follow-up questions to develop a short conversation on this topic.
-- After the conversation, you MUST transition to the next part by saying EXACTLY: "Thank you. Now let's talk about '${chosenAreas[1]}'."
+- To transition to Part 4, you MUST end your response with ONLY: "Thank you. Now let's talk about ${chosenAreas[1]}."
 
 Part 4: Topic Discussion 2.
-- You will now start a conversation on the second subject area: '${chosenAreas[1]}'.
-- Start with an opening question about this topic.
+- After the user acknowledges the transition, you will begin the conversation on the second subject area: '${chosenAreas[1]}'. Ask your first question on this topic.
 - Ask at least three follow-up questions to develop the conversation.
 - After their final answer in this part, you MUST end the test by saying ONLY: "That is the end of the test. Thank you." Do not add any other words or pleasantries.`;
 };
@@ -491,22 +622,137 @@ ${transcript}`;
         return parsed;
 
     } catch (error) {
-        console.error("Error generating final assessment:", error);
+        const errorMessage = getApiErrorMessage(error, "There was an error generating the assessment.");
+        const feedbackMessage = "Feedback unavailable due to an error.";
+        const improvementMessage = getApiErrorMessage(error, "Please try the mock test again.");
+        
         // Return a fallback assessment on error
         return {
             overallScore: 0,
             feedback: {
-                grammar: "Could not generate feedback.",
-                vocabulary: "Could not generate feedback.",
-                fluency: "Could not generate feedback.",
-                pronunciation: "Could not generate feedback."
+                grammar: feedbackMessage,
+                vocabulary: feedbackMessage,
+                fluency: feedbackMessage,
+                pronunciation: feedbackMessage
             },
-            strengths: "There was an error generating the assessment.",
-            areasForImprovement: "Please try the mock test again."
+            strengths: errorMessage,
+            areasForImprovement: improvementMessage
         };
     }
 };
 
+const transcriptAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        pictureDescriptionAnalysis: {
+            type: Type.OBJECT,
+            properties: {
+                modelAnswer: {
+                    type: Type.STRING,
+                    description: "Provide a detailed, high-quality A2-level model answer describing the provided picture. Cover the main people, actions, and the overall scene."
+                },
+                userPerformanceFeedback: {
+                    type: Type.STRING,
+                    description: "Provide specific feedback on the user's performance during the picture description part of the test. Comment on their vocabulary, grammar, and detail."
+                }
+            },
+            required: ["modelAnswer", "userPerformanceFeedback"]
+        },
+        conversationAnalysis: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    userTurn: {
+                        type: Type.STRING,
+                        description: "The original text from the user's turn."
+                    },
+                    feedback: {
+                        type: Type.STRING,
+                        description: "Provide concise, specific feedback on this user's turn, highlighting grammar or vocabulary mistakes."
+                    },
+                    suggestion: {
+                        type: Type.STRING,
+                        description: "Provide an improved, natural-sounding version of the user's turn."
+                    }
+                },
+                required: ["userTurn", "feedback", "suggestion"]
+            }
+        }
+    },
+    required: ["pictureDescriptionAnalysis", "conversationAnalysis"]
+};
+
+
+export const generateTranscriptAnalysis = async (history: Message[], imageUrl: string | null): Promise<TranscriptAnalysis> => {
+    const userTurns = history.filter(m => m.role === 'user').map(m => m.text);
+    const transcript = history.map(m => `${m.role}: ${m.text}`).join('\n');
+
+    const textPrompt = `You are an expert A2 English examiner. The following is a transcript of a mock A2 speaking test. A picture was used in Part 2 and is provided as input. Your task is to provide a detailed analysis of the user's performance. You MUST respond in the specified JSON format.
+
+1.  **Picture Description Analysis**:
+    - Based on the provided picture, write a comprehensive, A2-level model answer for the picture description.
+    - Provide specific feedback on the user's actual description from the transcript.
+
+2.  **Conversation Analysis**:
+    - For EVERY user turn in the transcript (excluding the picture description part, which is handled above), provide:
+        a. The original user text.
+        b. Specific feedback on any mistakes (grammar, vocabulary, phrasing).
+        c. A suggested, improved version of their answer. Ensure this list only contains turns from the conversational parts, not the picture description.
+
+**Transcript:**
+${transcript}
+`;
+
+    try {
+        const parts: any[] = [{ text: textPrompt }];
+        
+        if (imageUrl && imageUrl.startsWith('data:image/')) {
+            const [meta, base64Data] = imageUrl.split(',');
+            if (base64Data) {
+                const mimeType = meta.split(':')[1].split(';')[0];
+                parts.push({
+                    inlineData: {
+                        mimeType: mimeType,
+                        data: base64Data,
+                    },
+                });
+            }
+        }
+        
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts },
+            config: {
+                 responseMimeType: "application/json",
+                 responseSchema: transcriptAnalysisSchema,
+            }
+        });
+
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as TranscriptAnalysis;
+
+        if (!parsed.pictureDescriptionAnalysis || !parsed.conversationAnalysis) {
+             throw new Error("Invalid analysis format from API.");
+        }
+        return parsed;
+
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate analysis.");
+
+        return {
+            pictureDescriptionAnalysis: {
+                modelAnswer: errorMessage,
+                userPerformanceFeedback: errorMessage
+            },
+            conversationAnalysis: userTurns.map(turn => ({
+                userTurn: turn,
+                feedback: errorMessage,
+                suggestion: errorMessage
+            }))
+        };
+    }
+};
 
 
 // --- Other Mock Service Functions ---

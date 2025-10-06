@@ -117,6 +117,18 @@ export interface FinalAssessment {
   areasForImprovement: string;
 }
 
+export interface TranscriptAnalysis {
+    pictureDescriptionAnalysis: {
+        modelAnswer: string;
+        userPerformanceFeedback: string;
+    };
+    conversationAnalysis: Array<{
+        userTurn: string;
+        feedback: string;
+        suggestion: string;
+    }>;
+}
+
 
 // Notification System Types
 export type NotificationType = 'success' | 'info' | 'achievement';
@@ -132,4 +144,16 @@ export interface Notification {
   title: string;
   message: string;
   action?: NotificationAction;
+}
+
+// Pronunciation Practice Types
+export interface WordFeedback {
+    word: string;
+    feedback: string;
+    isCorrect: boolean;
+}
+
+export interface PronunciationFeedback {
+    overallFeedback: string;
+    wordAnalysis: WordFeedback[];
 }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Badge } from '../types';
-import { getUserProfile, updateUserName } from '../services/geminiService';
+import { getUserProfile, updateUserName, isApiKeySet, setApiKey } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
-import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon } from './IconComponents';
+import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, KeyIcon, EyeIcon, EyeSlashIcon } from './IconComponents';
 
 const iconMap: { [key in Badge['icon']]: React.FC<{ className?: string }> } = {
     AcademicCapIcon,
@@ -41,16 +41,27 @@ const ProfileStatCard: React.FC<{ title: string; value: string | number; icon: R
 const Profile: React.FC = () => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
     const [editingName, setEditingName] = useState('');
+    const [isEditingKey, setIsEditingKey] = useState(false);
+    const [apiKeyInput, setApiKeyInput] = useState('');
+    const [isKeyCurrentlySet, setIsKeyCurrentlySet] = useState(false);
+    const [isKeyVisible, setIsKeyVisible] = useState(false);
 
     const fetchProfile = async () => {
         setIsLoading(true);
         const data = await getUserProfile();
+        const keyIsSet = isApiKeySet();
+
         setProfile(data);
         setEditingName(data.name);
+        setIsKeyCurrentlySet(keyIsSet);
+
         if (!data.name) {
-            setIsEditing(true);
+            setIsEditingName(true);
+        }
+        if (!keyIsSet) {
+            setIsEditingKey(true);
         }
         setIsLoading(false);
     };
@@ -59,19 +70,19 @@ const Profile: React.FC = () => {
         fetchProfile();
     }, []);
 
-    const handleSave = async () => {
+    const handleSaveName = async () => {
         if (!profile || !editingName.trim()) return;
         setIsLoading(true);
         const updatedProfile = await updateUserName(editingName);
         setProfile(updatedProfile);
         setEditingName(updatedProfile.name);
-        setIsEditing(false);
+        setIsEditingName(false);
         setIsLoading(false);
     };
 
-    const handleCancel = () => {
+    const handleCancelName = () => {
         if (!profile) return;
-        setIsEditing(false);
+        setIsEditingName(false);
         setEditingName(profile.name);
     }
 
@@ -118,7 +129,7 @@ const Profile: React.FC = () => {
                         alt="User avatar"
                     />
                     <div className="relative group max-w-md mx-auto">
-                        {isEditing ? (
+                        {isEditingName ? (
                              <div className="flex flex-col items-center gap-2 mt-2">
                                 <input
                                     type="text"
@@ -127,11 +138,11 @@ const Profile: React.FC = () => {
                                     placeholder="Enter your name"
                                     className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white bg-gray-100 dark:bg-slate-800 text-center rounded-md focus:ring-2 focus:ring-blue-500 outline-none w-full max-w-xs"
                                     autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                                 />
                                 <div className="flex items-center gap-2 mt-2">
-                                    <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm font-semibold">Save</button>
-                                    {profile.name && <button onClick={handleCancel} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 text-sm font-semibold">Cancel</button>}
+                                    <button onClick={handleSaveName} className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm font-semibold">Save</button>
+                                    {profile.name && <button onClick={handleCancelName} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 text-sm font-semibold">Cancel</button>}
                                 </div>
                                 {!profile.name && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Please set your name to save progress.</p>}
                             </div>
@@ -139,7 +150,7 @@ const Profile: React.FC = () => {
                             <div className="flex items-center justify-center gap-2">
                                 <h2 className="text-3xl font-bold text-gray-800 dark:text-white">{profile.name}</h2>
                                 <button
-                                    onClick={() => setIsEditing(true)}
+                                    onClick={() => setIsEditingName(true)}
                                     className="p-2 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                                     aria-label="Edit name"
                                 >
@@ -172,7 +183,7 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
-                <div>
+                <div className="mb-10">
                     <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">My Badges</h3>
                     {profile.badges.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -184,6 +195,71 @@ const Profile: React.FC = () => {
                         <p className="text-gray-600 dark:text-gray-400 text-center py-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">You haven't earned any badges yet. Keep practicing!</p>
                     )}
                 </div>
+
+                <div>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                        <KeyIcon className="w-6 h-6" />
+                        API Key Configuration
+                    </h3>
+                    <div className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700">
+                        {isEditingKey ? (
+                            <div>
+                                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Your Gemini API Key
+                                </label>
+                                <div className="relative mt-1">
+                                    <input
+                                        type={isKeyVisible ? 'text' : 'password'}
+                                        id="api-key"
+                                        value={apiKeyInput}
+                                        onChange={(e) => setApiKeyInput(e.target.value)}
+                                        placeholder="Enter your API key here"
+                                        className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsKeyVisible(!isKeyVisible)}
+                                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
+                                    >
+                                        {isKeyVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    Your key is stored in your browser's local storage and is not sent to any servers. Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>.
+                                </p>
+                                <div className="flex items-center gap-2 mt-4">
+                                    <button
+                                        onClick={() => setApiKey(apiKeyInput)}
+                                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm font-semibold disabled:bg-green-300"
+                                        disabled={!apiKeyInput.trim()}
+                                    >
+                                        Save & Reload
+                                    </button>
+                                    {isKeyCurrentlySet && (
+                                        <button onClick={() => { setIsEditingKey(false); setIsKeyVisible(false); }} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 text-sm font-semibold">
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-gray-800 dark:text-gray-100">Your Gemini API key is configured.</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">The app is ready for use.</p>
+                                </div>
+                                <button
+                                    onClick={() => { setApiKeyInput(''); setIsEditingKey(true); }}
+                                    className="px-4 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 rounded-md hover:bg-blue-200 text-sm font-semibold"
+                                >
+                                    Change Key
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
             </div>
         </div>
     );

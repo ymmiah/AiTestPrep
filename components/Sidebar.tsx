@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../App';
-import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, AcademicCapIcon, CalendarDaysIcon, QuestionMarkCircleIcon, SparklesIcon, UserCircleIcon, TrophyIcon, ClipboardDocumentCheckIcon } from './IconComponents';
+import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, AcademicCapIcon, CalendarDaysIcon, QuestionMarkCircleIcon, SparklesIcon, UserCircleIcon, TrophyIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
 
 interface SidebarProps {
   activeView: View;
@@ -38,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { view: 'dashboard', label: 'Dashboard', icon: <HomeIcon className="w-5 h-5" /> },
     { view: 'simulator', label: 'Conversation', icon: <ChatBubbleIcon className="w-5 h-5" /> },
     { view: 'mockTest', label: 'Mock Exam', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" /> },
+    { view: 'pronunciation', label: 'Pronunciation', icon: <SoundWaveIcon className="w-5 h-5" /> },
     { view: 'vocabulary', label: 'Vocabulary', icon: <CardStackIcon className="w-5 h-5" /> },
     { view: 'listening', label: 'Listening', icon: <HeadphonesIcon className="w-5 h-5" /> },
     { view: 'grammar', label: 'Grammar', icon: <AcademicCapIcon className="w-5 h-5" /> },

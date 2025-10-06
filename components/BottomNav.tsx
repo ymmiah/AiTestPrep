@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../App';
-import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, UserCircleIcon, ClipboardDocumentCheckIcon } from './IconComponents';
+import { HomeIcon, ChatBubbleIcon, CardStackIcon, UserCircleIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
 
 interface BottomNavProps {
   activeView: View;
@@ -33,8 +33,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setActiveView }) => {
     { view: 'dashboard', label: 'Home', icon: <HomeIcon className="w-6 h-6" /> },
     { view: 'simulator', label: 'Speak', icon: <ChatBubbleIcon className="w-6 h-6" /> },
     { view: 'mockTest', label: 'Test', icon: <ClipboardDocumentCheckIcon className="w-6 h-6" /> },
+    { view: 'pronunciation', label: 'Pronounce', icon: <SoundWaveIcon className="w-6 h-6" /> },
     { view: 'vocabulary', label: 'Words', icon: <CardStackIcon className="w-6 h-6" /> },
-    { view: 'listening', label: 'Listen', icon: <HeadphonesIcon className="w-6 h-6" /> },
     { view: 'profile', label: 'Profile', icon: <UserCircleIcon className="w-6 h-6" /> },
   ];
 

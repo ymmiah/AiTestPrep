@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Message, Role, FinalAssessment } from '../types';
-import { startMockTestSession, generateFinalAssessment, updateUserProfile, endMockTestSession, generateTestImage } from '../services/geminiService';
+import { Message, Role, FinalAssessment, TranscriptAnalysis } from '../types';
+import { startMockTestSession, generateFinalAssessment, updateUserProfile, endMockTestSession, generateTestImage, generateTranscriptAnalysis } from '../services/geminiService';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useNotification } from '../contexts/NotificationContext';
@@ -23,7 +23,10 @@ const MockTest: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [finalAssessment, setFinalAssessment] = useState<FinalAssessment | null>(null);
+    const [transcriptAnalysis, setTranscriptAnalysis] = useState<TranscriptAnalysis | null>(null);
     const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
+    const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+
 
     const chatSessionRef = useRef<Chat | null>(null);
     const timerRef = useRef<number | null>(null);
@@ -53,22 +56,49 @@ const MockTest: React.FC = () => {
 
         setTestStep('finished');
         setIsLoadingAssessment(true);
+        setIsLoadingAnalysis(true);
 
-        const assessment = await generateFinalAssessment(messages);
-        setFinalAssessment(assessment);
-        setIsLoadingAssessment(false);
+        const assessmentPromise = generateFinalAssessment(messages);
+        const analysisPromise = generateTranscriptAnalysis(messages, imageUrl);
 
-        const points = Math.round(assessment.overallScore * 1.5); // Award points based on score
-        await updateUserProfile(profile => ({
-            ...profile,
-            points: profile.points + points,
-        }));
+        let assessmentResult: FinalAssessment | null = null;
+
+        try {
+            const [assessment, analysis] = await Promise.all([assessmentPromise, analysisPromise]);
+            assessmentResult = assessment;
+            setFinalAssessment(assessment);
+            setTranscriptAnalysis(analysis);
+        } catch (error) {
+            console.error("Failed to get post-test analysis:", error);
+            addNotification({
+                type: 'info',
+                title: 'Analysis Error',
+                message: 'Could not generate the detailed analysis for your test.',
+            });
+        } finally {
+            setIsLoadingAssessment(false);
+            setIsLoadingAnalysis(false);
+        }
         
-        addNotification({
-            type: 'success',
-            title: 'Test Complete!',
-            message: `You earned ${points} points for completing the exam.`,
-        });
+        const points = Math.round((assessmentResult?.overallScore || 0) * 1.5);
+        if (points > 0) {
+            await updateUserProfile(profile => ({
+                ...profile,
+                points: profile.points + points,
+            }));
+            
+            addNotification({
+                type: 'success',
+                title: 'Test Complete!',
+                message: `You earned ${points} points for completing the exam.`,
+            });
+        } else {
+             addNotification({
+                type: 'success',
+                title: 'Test Complete!',
+                message: `View your assessment and detailed analysis below.`,
+            });
+        }
 
         endMockTestSession();
     };
@@ -88,6 +118,7 @@ const MockTest: React.FC = () => {
         setTimeLeft(TEST_DURATION_SECONDS);
         setMessages([]);
         setFinalAssessment(null);
+        setTranscriptAnalysis(null);
         setIsProcessing(true);
 
         // Generate image in the background, but don't show it yet
@@ -124,15 +155,14 @@ const MockTest: React.FC = () => {
             const result = await chatSessionRef.current.sendMessage({ message: transcript });
             const modelText = result.text.trim();
             
-            // Part transition logic
-            if (modelText.includes("we are going to look at a picture.")) {
-                setTestPart('picture');
-            } else if (modelText.includes("Now, let's talk about something else.")) {
+            // Part transition logic: Order is important to check for the most specific phrases first.
+            if (modelText.startsWith("Okay, thank you. Now, let's talk about")) {
                 setTestPart('topic1');
             } else if (modelText.startsWith("Thank you. Now let's talk about")) {
                 setTestPart('topic2');
+            } else if (modelText.includes("we are going to look at a picture.")) {
+                setTestPart('picture');
             }
-
 
             if (modelText.toLowerCase().includes("that is the end of the test")) {
                 const modelMessage: Message = { role: Role.MODEL, text: modelText };
@@ -182,7 +212,7 @@ const MockTest: React.FC = () => {
     
     const renderFinishedView = () => (
         <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
-            <div className="max-w-3xl mx-auto">
+            <div className="w-full max-w-3xl mx-auto">
                  <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Test Complete!</h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">Here is your final assessment.</p>
@@ -209,7 +239,7 @@ const MockTest: React.FC = () => {
                              <p className="text-gray-700 dark:text-gray-300">{finalAssessment.areasForImprovement}</p>
                         </div>
                         
-                        <TranscriptReview messages={messages} />
+                        <TranscriptReview messages={messages} analysis={transcriptAnalysis} imageUrl={imageUrl} isLoading={isLoadingAnalysis} />
                         
                         <button onClick={() => { setImageUrl(null); setTestStep('idle'); }} className="w-full mt-4 px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
                             Take Another Test
