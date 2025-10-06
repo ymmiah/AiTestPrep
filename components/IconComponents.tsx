@@ -189,3 +189,16 @@ export const EyeSlashIcon: React.FC<{ className?: string }> = ({ className }) =>
       <path d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c1.355 0 2.662.27 3.882.755l-1.42 1.42A3.734 3.734 0 0012.001 6c-3.31 0-6.22 2.12-7.553 5.25a.75.75 0 000 .5c.29.682.658 1.323 1.099 1.908l-1.42 1.42A11.217 11.217 0 011.323 12.553a.75.75 0 010-1.113z" />
     </svg>
 );
+
+export const SpeakerWaveIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.348 2.595.341 1.24 1.518 1.905 2.66 1.905H6.44l4.5 4.5c.945.945 2.56.276 2.56-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.672 3.672 3.672 9.63 0 13.302a.75.75 0 11-1.06-1.06c3.102-3.102 3.102-8.142 0-11.244a.75.75 0 010-1.06z" />
+      <path d="M16.464 7.226a.75.75 0 011.06 0c2.122 2.121 2.122 5.565 0 7.686a.75.75 0 11-1.06-1.06c1.552-1.552 1.552-4.074 0-5.626a.75.75 0 010-1.06z" />
+    </svg>
+);
+
+export const ArrowLeftIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clipRule="evenodd" />
+    </svg>
+);

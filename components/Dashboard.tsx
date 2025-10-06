@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUserProfile } from '../services/geminiService';
 import { UserProfile } from '../types';
-import { View } from '../App';
+import { View } from '../A2App';
 import SkeletonLoader from './SkeletonLoader';
 import { ChatBubbleIcon, SoundWaveIcon, CardStackIcon, HeadphonesIcon, SparklesIcon, ClipboardDocumentCheckIcon } from './IconComponents';
 
@@ -24,7 +24,7 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
 const QuickLink: React.FC<{ title: string; description: string; onClick: () => void; }> = ({ title, description, onClick }) => (
     <button
         onClick={onClick}
-        className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700 text-left hover:bg-gray-100 dark:hover:bg-slate-800 hover:shadow-md transition-all w-full"
+        className="select-none bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700 text-left hover:bg-gray-100 dark:hover:bg-slate-800 hover:shadow-md active:bg-gray-200 dark:active:bg-slate-700 active:shadow-sm transition-all w-full"
     >
         <h4 className="font-semibold text-blue-600 dark:text-blue-400">{title}</h4>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{description}</p>

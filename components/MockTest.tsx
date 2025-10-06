@@ -13,9 +13,10 @@ import SkeletonLoader from './SkeletonLoader';
 
 const TEST_DURATION_SECONDS = 420; // 7 minutes
 type TestPart = 'intro' | 'picture' | 'topic1' | 'topic2';
+type TestStep = 'idle' | 'running' | 'review' | 'finished';
 
 const MockTest: React.FC = () => {
-    const [testStep, setTestStep] = useState<'idle' | 'running' | 'finished'>('idle');
+    const [testStep, setTestStep] = useState<TestStep>('idle');
     const [testPart, setTestPart] = useState<TestPart>('intro');
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isImageLoading, setIsImageLoading] = useState(false);
@@ -54,50 +55,22 @@ const MockTest: React.FC = () => {
         stopListening();
         cancelSpeech();
 
-        setTestStep('finished');
-        setIsLoadingAssessment(true);
+        setTestStep('review');
         setIsLoadingAnalysis(true);
-
-        const assessmentPromise = generateFinalAssessment(messages);
-        const analysisPromise = generateTranscriptAnalysis(messages, imageUrl);
-
-        let assessmentResult: FinalAssessment | null = null;
+        setTranscriptAnalysis(null);
 
         try {
-            const [assessment, analysis] = await Promise.all([assessmentPromise, analysisPromise]);
-            assessmentResult = assessment;
-            setFinalAssessment(assessment);
+            const analysis = await generateTranscriptAnalysis(messages, imageUrl);
             setTranscriptAnalysis(analysis);
         } catch (error) {
-            console.error("Failed to get post-test analysis:", error);
+            console.error("Failed to get transcript analysis:", error);
             addNotification({
                 type: 'info',
                 title: 'Analysis Error',
                 message: 'Could not generate the detailed analysis for your test.',
             });
         } finally {
-            setIsLoadingAssessment(false);
             setIsLoadingAnalysis(false);
-        }
-        
-        const points = Math.round((assessmentResult?.overallScore || 0) * 1.5);
-        if (points > 0) {
-            await updateUserProfile(profile => ({
-                ...profile,
-                points: profile.points + points,
-            }));
-            
-            addNotification({
-                type: 'success',
-                title: 'Test Complete!',
-                message: `You earned ${points} points for completing the exam.`,
-            });
-        } else {
-             addNotification({
-                type: 'success',
-                title: 'Test Complete!',
-                message: `View your assessment and detailed analysis below.`,
-            });
         }
 
         endMockTestSession();
@@ -184,6 +157,46 @@ const MockTest: React.FC = () => {
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
+    
+    const handleGetFinalAssessment = async () => {
+        setTestStep('finished');
+        setIsLoadingAssessment(true);
+        setFinalAssessment(null);
+
+        try {
+            const assessment = await generateFinalAssessment(messages);
+            setFinalAssessment(assessment);
+
+            const points = Math.round((assessment?.overallScore || 0) * 1.5);
+            if (points > 0) {
+                await updateUserProfile(profile => ({
+                    ...profile,
+                    points: profile.points + points,
+                }));
+                
+                addNotification({
+                    type: 'success',
+                    title: 'Assessment Ready!',
+                    message: `You earned ${points} points for completing the exam.`,
+                });
+            } else {
+                 addNotification({
+                    type: 'info',
+                    title: 'Assessment Ready!',
+                    message: `View your final assessment below.`,
+                });
+            }
+        } catch (error) {
+            console.error("Failed to generate final assessment:", error);
+            addNotification({
+                type: 'info',
+                title: 'Assessment Error',
+                message: 'Could not generate your final score.',
+            });
+        } finally {
+            setIsLoadingAssessment(false);
+        }
+    };
 
     const isAiTurn = isProcessing || isSpeaking;
     
@@ -203,13 +216,41 @@ const MockTest: React.FC = () => {
             </p>
             <button
                 onClick={handleStartTest}
-                className="mt-8 px-8 py-3 text-lg font-semibold rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900"
+                className="select-none mt-8 px-8 py-3 text-lg font-semibold rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900"
             >
                 Start Test
             </button>
         </div>
     );
     
+    const renderReviewView = () => (
+        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
+            <div className="w-full max-w-3xl mx-auto">
+                <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Review Your Test</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">Here's a detailed breakdown of your performance. When you're ready, get your final score.</p>
+                </div>
+                
+                <TranscriptReview messages={messages} analysis={transcriptAnalysis} imageUrl={imageUrl} isLoading={isLoadingAnalysis} />
+
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button onClick={() => { setImageUrl(null); setTestStep('idle'); }} className="select-none w-full px-6 py-3 border border-gray-300 dark:border-slate-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 active:bg-gray-100 dark:active:bg-slate-500">
+                        Take Another Test
+                    </button>
+                    {finalAssessment ? (
+                        <button onClick={() => setTestStep('finished')} className="select-none w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800">
+                           View Final Score
+                        </button>
+                    ) : (
+                        <button onClick={handleGetFinalAssessment} className="select-none w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800">
+                           Get Final Assessment
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
     const renderFinishedView = () => (
         <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
             <div className="w-full max-w-3xl mx-auto">
@@ -239,11 +280,14 @@ const MockTest: React.FC = () => {
                              <p className="text-gray-700 dark:text-gray-300">{finalAssessment.areasForImprovement}</p>
                         </div>
                         
-                        <TranscriptReview messages={messages} analysis={transcriptAnalysis} imageUrl={imageUrl} isLoading={isLoadingAnalysis} />
-                        
-                        <button onClick={() => { setImageUrl(null); setTestStep('idle'); }} className="w-full mt-4 px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                            Take Another Test
-                        </button>
+                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button onClick={() => { setImageUrl(null); setTestStep('idle'); }} className="select-none w-full px-6 py-3 border border-gray-300 dark:border-slate-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 active:bg-gray-100 dark:active:bg-slate-500">
+                                Take Another Test
+                            </button>
+                             <button onClick={() => setTestStep('review')} className="select-none w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800">
+                                Review Transcript
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -287,7 +331,7 @@ const MockTest: React.FC = () => {
                     ) : (
                         <button
                             onClick={isListening ? stopListening : startListening}
-                            className={`flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4
+                            className={`select-none flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 active:scale-95
                             ${isListening 
                                 ? 'bg-red-500 text-white focus:ring-red-300 animate-pulse' 
                                 : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300'
@@ -314,6 +358,8 @@ const MockTest: React.FC = () => {
             return renderIdleView();
         case 'running':
             return renderRunningView();
+        case 'review':
+            return renderReviewView();
         case 'finished':
             return renderFinishedView();
         default:

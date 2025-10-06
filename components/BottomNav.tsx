@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from '../App';
+import { View } from '../A2App';
 import { HomeIcon, ChatBubbleIcon, CardStackIcon, UserCircleIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
 
 interface BottomNavProps {
@@ -16,7 +16,7 @@ const NavItem: React.FC<{
 }> = ({ viewName, label, icon, activeView, setActiveView }) => {
   const isActive = activeView === viewName;
   const buttonClass = `
-    flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs transition-colors duration-200 focus:outline-none
+    flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs transition-colors duration-200 focus:outline-none select-none active:bg-gray-100 dark:active:bg-slate-800
     ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-300'}
   `;
 

@@ -9,7 +9,7 @@ import FeedbackCard from './FeedbackCard';
 import PictureCard from './PictureCard';
 import { MicrophoneIcon, StopIcon, LightbulbIcon, SparklesIcon, PencilIcon, DocumentArrowDownIcon, TrashIcon } from './IconComponents';
 
-type Scenario = 'default' | 'coffee' | 'doctor' | 'picture';
+type Scenario = 'default' | 'coffee' | 'doctor' | 'picture' | 'directions';
 type PanelViewType = 'feedback' | 'idea' | 'improvement';
 
 const scenarioPrompts: { [key in Scenario]: string } = {
@@ -17,6 +17,7 @@ const scenarioPrompts: { [key in Scenario]: string } = {
     coffee: "Hello! Welcome to the coffee shop. What would you like to order today?",
     doctor: "Good morning. I'm Dr. Smith. Please, have a seat. What seems to be the problem today?",
     picture: "Okay, let's practice picture description. Please look at the image and tell me what you see.",
+    directions: "Excuse me, I'm a bit lost. Could you tell me how to get to the nearest supermarket?",
 }
 
 const ConversationSimulator: React.FC = () => {
@@ -240,7 +241,7 @@ const ConversationSimulator: React.FC = () => {
   };
 
   const showFeedbackControls = feedback && !isProcessing && !isSpeaking && !isListening;
-  const sideButtonStyle = "flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed scale-100 hover:scale-105 active:scale-95";
+  const sideButtonStyle = "select-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed scale-100 hover:scale-105 active:scale-95";
 
 
   return (
@@ -262,6 +263,7 @@ const ConversationSimulator: React.FC = () => {
                     <option value="picture">Picture Description</option>
                     <option value="coffee">Ordering Coffee</option>
                     <option value="doctor">At the Doctor's</option>
+                    <option value="directions">Asking for Directions</option>
                 </select>
             </div>
             {hasHistory && (
@@ -269,7 +271,7 @@ const ConversationSimulator: React.FC = () => {
                     <button
                         onClick={handleLoadConversation}
                         disabled={isAiTurn || isListening}
-                        className="flex items-center justify-center gap-2 px-3 h-10 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900 text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="select-none flex items-center justify-center gap-2 px-3 h-10 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900 active:bg-blue-300 dark:active:bg-blue-800 text-sm font-semibold transition-colors disabled:opacity-50"
                         title="Resume previous chat for this scenario"
                     >
                         <DocumentArrowDownIcon className="w-5 h-5" />
@@ -278,7 +280,7 @@ const ConversationSimulator: React.FC = () => {
                      <button
                         onClick={handleClearHistory}
                         disabled={isAiTurn || isListening}
-                        className="flex items-center justify-center gap-2 p-2 h-10 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 rounded-md hover:bg-red-200 dark:hover:bg-red-900 text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="select-none flex items-center justify-center gap-2 p-2 h-10 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 rounded-md hover:bg-red-200 dark:hover:bg-red-900 active:bg-red-300 dark:active:bg-red-800 text-sm font-semibold transition-colors disabled:opacity-50"
                         title="Delete chat history for this scenario"
                     >
                         <TrashIcon className="w-5 h-5" />
@@ -313,7 +315,7 @@ const ConversationSimulator: React.FC = () => {
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">{getPanelTitle()}</h3>
                          <button 
                             onClick={() => setPanelView(null)} 
-                            className="px-4 py-2 font-semibold text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+                            className="select-none px-4 py-2 font-semibold text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 active:bg-gray-400 dark:active:bg-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
                         >
                              Done
                         </button>
@@ -353,7 +355,7 @@ const ConversationSimulator: React.FC = () => {
                 {isAiTurn ? (
                     <button
                         onClick={handleStopConversation}
-                        className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-colors duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 bg-red-500 text-white focus:ring-red-300 hover:bg-red-600"
+                        className="select-none flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-colors duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 bg-red-500 text-white focus:ring-red-300 hover:bg-red-600"
                         aria-label="Stop conversation"
                     >
                         <StopIcon className="w-8 h-8" />
@@ -361,7 +363,7 @@ const ConversationSimulator: React.FC = () => {
                 ) : (
                     <button
                         onClick={isListening ? stopListening : handleStartListening}
-                        className={`flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4
+                        className={`select-none flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 active:scale-95
                         ${isListening 
                             ? 'bg-red-500 text-white focus:ring-red-300 animate-pulse' 
                             : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300'

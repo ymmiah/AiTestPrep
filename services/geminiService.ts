@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, ApiConfig, AiProvider, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -7,21 +7,39 @@ import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai'
 // this would be in its own file (e.g., userService.ts).
 
 const USER_PROFILE_KEY = 'userProfileData';
-const USER_API_KEY_KEY = 'gemini_api_key';
+const API_CONFIG_KEY = 'apiConfig';
+const OLD_API_KEY_KEY = 'gemini_api_key'; // For migration purposes
+
 
 // --- Helper function for API errors ---
 const getApiErrorMessage = (error: unknown, defaultMessage: string): string => {
     console.error("Gemini API Error:", error);
-    // Stringify the error to safely search for keywords, regardless of its original type.
-    const errorString = (typeof error === 'string' ? error : JSON.stringify(error)).toLowerCase();
 
-    if (errorString.includes('quota') || errorString.includes('resource_exhausted')) {
-        return "API Error: You have exceeded your usage quota. Please check your Google AI account or try again later.";
+    let errorString: string;
+    
+    // Check if it's an Error object and get its message.
+    // The Gemini SDK often throws an error where the message contains the JSON response from the server.
+    if (error instanceof Error) {
+        errorString = error.message;
+    } 
+    // Otherwise, handle other types (plain objects, strings, etc.)
+    else {
+        try {
+            errorString = JSON.stringify(error);
+        } catch {
+            errorString = String(error);
+        }
     }
-    if (errorString.includes('api key not valid')) {
+
+    const lowerCaseErrorString = errorString.toLowerCase();
+
+    if (lowerCaseErrorString.includes('quota') || lowerCaseErrorString.includes('resource_exhausted')) {
+        return "API Quota Exceeded: You've made too many requests recently. Please wait a moment and try again. Using fallback content for now.";
+    }
+    if (lowerCaseErrorString.includes('api key not valid')) {
         return "API Error: Your API key is not valid. Please check the key in your profile or config file.";
     }
-    if (errorString.includes('safety')) {
+    if (lowerCaseErrorString.includes('safety')) {
         return "The response was blocked due to safety settings. Please modify your prompt and try again.";
     }
     
@@ -163,59 +181,74 @@ export const clearConversationHistory = async (scenario: string): Promise<void> 
 };
 
 
-// --- Gemini API Integration for Conversational AI ---
+// --- API Configuration Management ---
 
 /**
- * Checks if a user has provided their own API key in local storage.
- * @returns {boolean} True if a key is set, false otherwise.
+ * Retrieves the API configuration from localStorage.
+ * Handles migration from the old single-key format.
+ * @returns {ApiConfig} The current API configuration.
  */
-export const isApiKeySet = (): boolean => {
-    return !!localStorage.getItem(USER_API_KEY_KEY);
+export const getApiConfig = (): ApiConfig => {
+    const storedConfig = localStorage.getItem(API_CONFIG_KEY);
+    if (storedConfig) {
+        return JSON.parse(storedConfig);
+    }
+
+    // Migration logic: If old key exists, create new config from it.
+    const oldKey = localStorage.getItem(OLD_API_KEY_KEY);
+    if (oldKey) {
+        const newConfig: ApiConfig = {
+            provider: 'gemini',
+            keys: { gemini: oldKey }
+        };
+        localStorage.setItem(API_CONFIG_KEY, JSON.stringify(newConfig));
+        localStorage.removeItem(OLD_API_KEY_KEY); // Clean up the old key
+        return newConfig;
+    }
+
+    // Default empty config if nothing is found
+    return {
+        provider: 'gemini',
+        keys: {}
+    };
 };
 
 /**
- * Saves a user-provided API key to local storage and reloads the page.
- * Reloading ensures the Gemini client is re-initialized with the new key.
- * @param {string} key The API key to save.
+ * Saves the updated API configuration and reloads the page to apply changes.
+ * @param {ApiConfig} config The new configuration object to save.
  */
-export const setApiKey = (key: string): void => {
-    if (key.trim()) {
-        localStorage.setItem(USER_API_KEY_KEY, key.trim());
-    } else {
-        localStorage.removeItem(USER_API_KEY_KEY);
-    }
-    // Reload the application to re-initialize the Gemini client with the new key.
+export const saveApiConfig = (config: ApiConfig): void => {
+    localStorage.setItem(API_CONFIG_KEY, JSON.stringify(config));
     window.location.reload();
 };
 
 
 /**
- * Retrieves the Gemini API key, following a specific priority order to ensure
- * user-provided keys are always used first.
- * @returns {string} The API key.
- * @throws {Error} If no API key can be found in any of the potential locations.
+ * Checks if the required Gemini API key is set for the app to function.
+ * @returns {boolean} True if a Gemini key is set, false otherwise.
+ */
+export const isApiKeySet = (): boolean => {
+    const config = getApiConfig();
+    return !!config.keys.gemini;
+};
+
+/**
+ * Retrieves the Gemini API key. This app is architected for Gemini, so this
+ * function specifically looks for the Gemini key, regardless of the user's
+ * selected provider (which might be for future use).
+ * @returns {string} The Gemini API key.
+ * @throws {Error} If no Gemini API key can be found.
  */
 const getApiKey = (): string => {
-    // Priority 1: User-provided key from browser's local storage.
-    const userKey = localStorage.getItem(USER_API_KEY_KEY);
-    if (userKey) {
-        return userKey;
-    }
-
-    // Priority 2: Key from a Node.js-like environment (e.g., deployment variable).
-    // This is a safer check than a try-catch block for detecting the 'process' object.
+    // FIX: Per coding guidelines, API key must be retrieved from process.env.API_KEY.
+    // The previous implementation incorrectly tried to get it from localStorage via getApiConfig().
     if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
         return process.env.API_KEY;
     }
-    
-    // Priority 3: Key from a `config.js` file for local browser development.
-    if ((window as any).process?.env?.API_KEY) {
-        return (window as any).process.env.API_KEY;
-    }
 
     // If no key is found, throw an error.
-    const message = "API Key not found. Please add your key in the Profile page, or for local development, create a `config.js` file. See the README for setup instructions.";
-    alert(message); // Provide a clear message to the developer in the browser.
+    const message = "Gemini API Key not found in environment variables. Please ensure process.env.API_KEY is set. See the README for setup instructions.";
+    alert(message);
     throw new Error(message);
 };
 
@@ -271,7 +304,8 @@ const systemInstructions: { [key: string]: string } = {
     default: "You are a friendly and patient AI examiner for the A2 English language test. Your goal is to have a natural conversation with the user to assess their speaking ability. Keep your responses short, clear, and encouraging. Always ask a follow-up question to keep the conversation flowing. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
     coffee: "You are a friendly barista in a coffee shop in London. The user is a customer. Your goal is to have a natural, role-playing conversation to take their order. Ask follow-up questions about size, milk, sugar, etc. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
     doctor: "You are a kind and professional doctor (Dr. Smith) in the UK. The user is your patient. Your goal is to have a natural, role-playing conversation to understand their health problem. Ask follow-up questions about their symptoms. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
-    picture: "You are a friendly A2 English test examiner. You are having a conversation about a picture of a busy outdoor market. The user will describe it. Your goal is to ask follow-up questions about the people, the setting, and what's happening. After each user response, you MUST provide a response and structured feedback in the specified JSON format."
+    picture: "You are a friendly A2 English test examiner. You are having a conversation about a picture of a busy outdoor market. The user will describe it. Your goal is to ask follow-up questions about the people, the setting, and what's happening. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
+    directions: "You are a helpful local person on a street in the UK. The user is a tourist asking for directions. Your goal is to have a natural, role-playing conversation to help them. Give simple, clear, A2-level directions. You can use landmarks like 'the post office' or 'the big clock tower'. Ask clarifying questions. After each user response, you MUST provide a response and structured feedback in the specified JSON format."
 };
 
 /**
@@ -361,7 +395,7 @@ export const getImprovedAnswer = async (
     try {
         const result = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `An A2 English level user gave this answer: "${userTranscript}" to the question: "${lastModelQuestion}". Carefully provide an improved, more natural, and grammatically correct version of their answer. Your goal is to help them sound more fluent, not to change their original meaning. Keep the core idea of their answer the same. Present ONLY the improved answer text, without any extra explanations like "Here is an improved version:".`,
+            contents: `An A2 English level user gave this answer: "${userTranscript}" to the question: "${lastModelQuestion}". Your task is to act as an expert English tutor. If the user's answer contains grammatical errors or unnatural phrasing, provide a corrected and more natural-sounding version. If the user's answer is already perfect, provide a slightly different, high-quality alternative way they could have answered. Your goal is to always provide a helpful, improved example. Keep the core idea of their answer the same. Present ONLY the improved answer text, without any extra explanations like "Here is an improved version:".`,
         });
         return result.text.trim();
     } catch (error) {
@@ -673,7 +707,7 @@ const transcriptAnalysisSchema = {
                     },
                     suggestion: {
                         type: Type.STRING,
-                        description: "Provide an improved, natural-sounding version of the user's turn."
+                        description: "Provide a corrected and improved, natural-sounding version of the user's turn. If the original was incorrect, focus on fixing the errors. If it was correct, provide a slightly more fluent or alternative phrasing."
                     }
                 },
                 required: ["userTurn", "feedback", "suggestion"]
@@ -750,6 +784,202 @@ ${transcript}
                 feedback: errorMessage,
                 suggestion: errorMessage
             }))
+        };
+    }
+};
+
+// --- IELTS Service Functions ---
+
+export const generateIELTSWritingPrompt = async (task: 'Task 1' | 'Task 2'): Promise<string> => {
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `You are an IELTS test content creator. Generate a single, realistic IELTS Academic Writing ${task} prompt. For Task 1, this should be a description of a chart, graph, table, or diagram. For Task 2, it should be an essay question on a common topic. Respond with ONLY the prompt text, without any additional explanations or formatting like "Here is the prompt:".`,
+        });
+        return result.text.trim();
+    } catch (error) {
+        console.error(`Failed to generate IELTS ${task} prompt:`, error);
+        if (task === 'Task 1') {
+            return "The chart below shows the changes in the share of the population in cities in different continents. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.";
+        }
+        return "Some people think that technology has made our lives more complex, while others believe it has simplified them. Discuss both views and give your own opinion."; // Fallback prompt
+    }
+};
+
+const ieltsWritingFeedbackSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overallBand: { type: Type.NUMBER, description: "The overall band score from 1-9, as an average of the four criteria, rounded to the nearest 0.5." },
+        taskAchievement: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Task Achievement (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on how well the response addresses the task requirements." }
+            },
+            required: ["score", "feedback"]
+        },
+        coherenceAndCohesion: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Coherence and Cohesion (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on the organization of ideas, paragraphing, and use of cohesive devices." }
+            },
+            required: ["score", "feedback"]
+        },
+        lexicalResource: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Lexical Resource (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on the range of vocabulary, accuracy, and appropriate use of words." }
+            },
+            required: ["score", "feedback"]
+        },
+        grammaticalRangeAndAccuracy: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Grammatical Range and Accuracy (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on the range and accuracy of grammatical structures and sentence types." }
+            },
+            required: ["score", "feedback"]
+        },
+        suggestedImprovements: {
+            type: Type.STRING,
+            description: "A concise, bulleted list of the top 2-3 most important suggestions for improvement. Use newline characters ('\n') to separate bullet points."
+        }
+    },
+    required: ["overallBand", "taskAchievement", "coherenceAndCohesion", "lexicalResource", "grammaticalRangeAndAccuracy", "suggestedImprovements"]
+};
+
+
+export const getIELTSWritingFeedback = async (prompt: string, essay: string, task: 'Task 1' | 'Task 2'): Promise<IELTSWritingFeedback> => {
+    const apiPrompt = `You are an expert IELTS examiner. Analyze the user's essay for the given prompt based on the official IELTS Writing scoring criteria. The essay is for ${task}.
+Provide a detailed assessment in a structured JSON format.
+
+**Essay Prompt:**
+${prompt}
+
+**User's Essay:**
+${essay}
+
+You MUST respond with a JSON object that adheres to the schema. For each criterion, provide a band score from 1-9 and specific, constructive feedback explaining why you gave that score. The overall band score should be a calculated average of the four criteria, rounded to the nearest 0.5. The suggested improvements should be a bulleted list of the most important things the user can do to improve.`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: apiPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: ieltsWritingFeedbackSchema,
+            }
+        });
+
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as IELTSWritingFeedback;
+        if (!parsed.overallBand) {
+            throw new Error("Invalid feedback format from API.");
+        }
+        return parsed;
+
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate writing feedback.");
+        return {
+            overallBand: 0,
+            taskAchievement: { score: 0, feedback: errorMessage },
+            coherenceAndCohesion: { score: 0, feedback: errorMessage },
+            lexicalResource: { score: 0, feedback: errorMessage },
+            grammaticalRangeAndAccuracy: { score: 0, feedback: errorMessage },
+            suggestedImprovements: "There was an error generating suggestions. Please try again."
+        };
+    }
+};
+
+export const generateIELTSModelAnswer = async (prompt: string, task: 'Task 1' | 'Task 2'): Promise<string> => {
+    const apiPrompt = `You are an expert IELTS teacher. A student has been given the following IELTS Writing ${task} prompt. Your task is to write a clear, high-quality, Band 8+ model answer for them to study. The response should be well-structured, use a wide range of vocabulary and grammatical structures, and directly address all parts of the prompt.
+
+**Essay Prompt:**
+${prompt}
+
+Respond with ONLY the model answer text, without any additional explanations, introductions, or formatting like "Here is a model answer:".`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: apiPrompt,
+        });
+        return result.text.trim();
+    } catch (error) {
+        return getApiErrorMessage(error, "Sorry, I couldn't generate a model answer at this time. Please try again later.");
+    }
+};
+
+const ieltsListeningExerciseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING, description: "A realistic title for an IELTS Listening Section 1 exercise." },
+        audioDuration: { type: Type.INTEGER, description: "An estimated duration of the audio script in seconds. Average speaking rate is 150 words per minute." },
+        script: { type: Type.STRING, description: "A full conversation script between two speakers for an IELTS Listening Section 1 scenario (e.g., booking a service, asking for information). Format it like 'Speaker 1: ...', 'Speaker 2: ...'." },
+        questions: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    questionType: { type: Type.STRING, description: "The type of question, either 'FORM' for fill-in-the-blank or 'MCQ' for multiple choice." },
+                    questionNumber: { type: Type.INTEGER },
+                    questionText: { type: Type.STRING, description: "The text for the question. For 'FORM' type, use '_____' to indicate a blank." },
+                    options: { 
+                        type: Type.ARRAY, 
+                        items: { type: Type.STRING },
+                        description: "An array of 3 string options. This field should ONLY be present for 'MCQ' type questions."
+                    },
+                    correctAnswer: { type: Type.STRING, description: "The correct answer. For 'FORM', it's the text for the blank. For 'MCQ', it's the exact text of the correct option." }
+                },
+                required: ["questionType", "questionNumber", "questionText", "correctAnswer"]
+            }
+        }
+    },
+    required: ["title", "audioDuration", "script", "questions"]
+};
+
+export const generateIELTSListeningExercise = async (): Promise<IELTSListeningExercise> => {
+    const prompt = `You are an expert IELTS test creator. Generate a complete, unique IELTS Listening Section 1 exercise.
+The exercise must contain a mix of question types based on a single conversation script.
+You must provide the following in a single JSON object:
+1.  A realistic title for the exercise (e.g., "Library Registration Form", "Event Booking Details").
+2.  A full conversation script between two speakers on an everyday social topic. The script should be between 250 and 350 words.
+3.  An estimated duration in seconds for the audio, assuming a speaking rate of 150 words per minute.
+4.  A set of exactly 5 questions based on the script:
+    - 3 questions of type 'FORM' (form completion). The questionText should include '_____' for the blank.
+    - 2 questions of type 'MCQ' (multiple choice). These must have an 'options' array with 3 choices. The 'correctAnswer' must be the exact text of one of the options.
+You MUST respond with a JSON object that strictly adheres to the provided schema.`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: ieltsListeningExerciseSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as IELTSListeningExercise;
+        if (!parsed.title || !parsed.questions || parsed.questions.length === 0) {
+            throw new Error("Invalid listening exercise format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate a listening exercise.");
+        console.error("Listening exercise generation failed:", errorMessage);
+        // Fallback data
+        return {
+            title: "Community Centre Evening Classes",
+            audioDuration: 120,
+            script: "Receptionist: Good evening, community centre, how can I help you? \nCaller: Oh, hello. I was calling to ask about your evening classes. \nReceptionist: Certainly. We have a few options. What are you interested in? \nCaller: I saw a poster for a pottery class. Is that still available? \nReceptionist: Ah yes, the pottery class with Mrs. Davis. That's on Wednesday evenings. \nCaller: Wednesday, okay. And what time does it start? \nReceptionist: It starts at 7:30 PM and runs for two hours. \nCaller: Perfect. And where is the class held? \nReceptionist: It's in the main building, in the art studio on the second floor. That's room 201. \nCaller: Room 201, got it. And what's the cost? \nReceptionist: The course costs eighty-five pounds for six weeks. But there is a discount for new members. \nCaller: Oh really? What is the discount? \nReceptionist: New members get 10% off the total price. \nCaller: That's great! Can I book a place over the phone? \nReceptionist: Of course. I'll just need your name. \nCaller: It's Peterson. Anna Peterson. \nReceptionist: Okay, Anna, you're all booked in. We look forward to seeing you.",
+            questions: [
+                { questionType: 'FORM', questionNumber: 1, questionText: "Type of class: _____", correctAnswer: "pottery" },
+                { questionType: 'FORM', questionNumber: 2, questionText: "Starts at: _____", correctAnswer: "7:30 PM" },
+                { questionType: 'FORM', questionNumber: 3, questionText: "Location: Room _____", correctAnswer: "201" },
+                { questionType: 'MCQ', questionNumber: 4, questionText: "How much does the course cost for six weeks?", options: ["£85", "£95", "10%"], correctAnswer: "£85" },
+                { questionType: 'MCQ', questionNumber: 5, questionText: "What special offer is available?", options: ["A free first class", "10% off for new members", "A discount on materials"], correctAnswer: "10% off for new members" }
+            ]
         };
     }
 };
@@ -834,19 +1064,159 @@ export const generateTopicsAndQuestions = async (topic: string): Promise<TopicQA
   });
 };
 
-export const getVocabularyWords = async (): Promise<VocabularyWord[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        { word: 'Delicious', definition: 'Having a very pleasant taste or smell.', example: 'The cake you baked was absolutely delicious.' },
-        { word: 'Appointment', definition: 'An arrangement to meet someone at a particular time and place.', example: 'I have a doctor\'s appointment at 3 PM.' },
-        { word: 'Queue', definition: 'A line of people or vehicles waiting their turn for something.', example: 'We had to wait in a long queue to buy the tickets.' },
-        { word: 'Recipe', definition: 'A set of instructions for preparing a particular dish.', example: 'My grandmother gave me her recipe for apple pie.' },
-        { word: 'Journey', definition: 'An act of travelling from one place to another.', example: 'The journey to the coast takes about two hours by car.' },
-      ]);
-    }, 500);
-  });
+const vocabularyChallengeSchema = {
+    type: Type.OBJECT,
+    properties: {
+        word: { type: Type.STRING, description: 'The vocabulary word.' },
+        definition: { type: Type.STRING, description: 'A simple, A2-level definition of the word.' },
+        type: { type: Type.STRING, description: 'The grammatical type of the word (e.g., "noun", "verb", "adjective").' },
+        pronunciation: { type: Type.STRING, description: 'A simplified phonetic pronunciation guide (e.g., "di-li-shuhs").' },
+        distractors: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'A list of 2-3 incorrect but plausible alternative words for a multiple-choice question.'
+        },
+    },
+    required: ["word", "definition", "type", "pronunciation", "distractors"]
 };
+
+const storyChunkSchema = {
+    type: Type.OBJECT,
+    properties: {
+        text: { type: Type.STRING, description: "A chunk of the story text. Can be a full sentence or a fragment leading up to a challenge." },
+        challenge: { ...vocabularyChallengeSchema, description: "An optional vocabulary challenge. When provided, the 'word' from this challenge is meant to follow the 'text' string." },
+    },
+    required: ["text"]
+};
+
+const vocabularyStorySchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING, description: "A short, engaging title for the story." },
+        chunks: {
+            type: Type.ARRAY,
+            items: storyChunkSchema,
+            description: "The story, broken into text chunks. Some chunks will have a vocabulary challenge associated with them."
+        }
+    },
+    required: ["title", "chunks"]
+};
+
+// Fallback data in case the API fails
+const fallbackStory: VocabularyStory = {
+    title: "A Day at the Market",
+    chunks: [
+        // FIX: Changed object with 'text' property to a simple string to match the StoryChunk type.
+        "Maria wanted to bake a cake for her friend's birthday. She needed to buy some fresh ingredients, so she decided to visit the local ",
+        {
+            challenge: {
+                word: "market",
+                definition: "A place where people buy and sell goods, especially food.",
+                type: "noun",
+                pronunciation: "mar-ket",
+                distractors: ["library", "office", "cinema"]
+            }
+        },
+        // FIX: Changed object with 'text' property to a simple string to match the StoryChunk type.
+        ". The market was very busy and colourful. She saw a stall selling ",
+        {
+            challenge: {
+                word: "delicious",
+                definition: "Having a very pleasant taste or smell.",
+                type: "adjective",
+                pronunciation: "di-li-shuhs",
+                distractors: ["difficult", "tall", "angry"]
+            }
+        },
+        // FIX: Changed object with 'text' property to a simple string to match the StoryChunk type.
+        " strawberries. 'I'll take one box, please!' she said to the seller. Next, she needed to find some flour and sugar. She had to stand in a long ",
+        {
+            challenge: {
+                word: "queue",
+                definition: "A line of people waiting for something.",
+                type: "noun",
+                pronunciation: "kyoo",
+                distractors: ["circle", "chair", "song"]
+            }
+        },
+        // FIX: Changed object with 'text' property to a simple string to match the StoryChunk type.
+        " at the bakery stall, but the baker was very friendly. Finally, with her basket full, she started her ",
+        {
+            challenge: {
+                word: "journey",
+                definition: "The act of travelling from one place to another.",
+                type: "noun",
+                pronunciation: "jur-nee",
+                distractors: ["story", "picture", "sleep"]
+            }
+        },
+        // FIX: Changed object with 'text' property to a simple string to match the StoryChunk type.
+        " home, excited to start baking."
+    ]
+};
+
+
+export const generateVocabularyStory = async (): Promise<[VocabularyStory, string | null]> => {
+    const prompt = `Create a short, simple story for an A2-level English learner. The story should be about a common daily activity in the UK. The total story should contain exactly 4 key vocabulary words suitable for this level. Structure the entire response as a single JSON object that strictly follows this schema. The story should be broken into chunks. A chunk can be a piece of text, or a piece of text followed by a vocabulary challenge. The 'word' in the challenge should logically follow the 'text' in its chunk. Provide 3 plausible but incorrect distractors for each challenge word.
+
+Here is an example of a single chunk with a challenge:
+{
+  "text": "It was a sunny day, so I decided to go for a walk in the ",
+  "challenge": {
+    "word": "park",
+    "definition": "A large public garden in a town, used for recreation.",
+    "type": "noun",
+    "pronunciation": "pahrk",
+    "distractors": ["school", "bank", "airport"]
+  }
+}
+And a chunk without a challenge:
+{
+  "text": ". I saw many people enjoying the weather."
+}
+`;
+    
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: vocabularyStorySchema,
+            }
+        });
+
+        const jsonString = result.text.trim();
+        let parsed = JSON.parse(jsonString) as { title: string, chunks: { text: string, challenge?: any }[] };
+        
+        // Post-process the response to fit the StoryChunk union type
+        const processedStory: VocabularyStory = {
+            title: parsed.title,
+            chunks: []
+        };
+        
+        parsed.chunks.forEach(chunk => {
+            processedStory.chunks.push(chunk.text);
+            if (chunk.challenge) {
+                processedStory.chunks.push({ challenge: chunk.challenge });
+            }
+        });
+
+        if (!processedStory.title || processedStory.chunks.length === 0) {
+            console.warn("Gemini returned an invalid story structure, using fallback.");
+            const errorMessage = "The AI couldn't create a story, so we've loaded a default one for you.";
+            return [fallbackStory, errorMessage];
+        }
+
+        return [processedStory, null];
+
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "An AI error occurred, so we've loaded a default story for you to practice with.");
+        console.error("Failed to generate vocabulary story from Gemini:", errorMessage);
+        return [fallbackStory, errorMessage];
+    }
+};
+
 
 export const getListeningExercise = async (): Promise<ListeningExercise> => {
     return new Promise((resolve) => {

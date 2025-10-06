@@ -87,7 +87,7 @@ const PronunciationPractice: React.FC = () => {
                  <button
                     onClick={handleGeneratePhrase}
                     disabled={isLoadingPhrase || isListening || isProcessing}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 text-sm font-semibold transition disabled:opacity-50"
+                    className="select-none mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 active:bg-gray-300 dark:active:bg-slate-500 text-sm font-semibold transition disabled:opacity-50"
                 >
                     <SparklesIcon className="w-4 h-4" />
                     Get New Phrase
@@ -98,7 +98,7 @@ const PronunciationPractice: React.FC = () => {
                     <button
                         onClick={isListening ? stopListening : startListening}
                         disabled={isLoadingPhrase || isProcessing}
-                        className={`flex items-center justify-center mx-auto w-20 h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4
+                        className={`select-none flex items-center justify-center mx-auto w-20 h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 active:scale-95
                         ${isListening 
                             ? 'bg-red-500 text-white focus:ring-red-300 animate-pulse' 
                             : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300'

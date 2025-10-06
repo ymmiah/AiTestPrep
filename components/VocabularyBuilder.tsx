@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { VocabularyWord, UserProfile } from '../types';
-import { getVocabularyWords, updateUserProfile, getUserProfile } from '../services/geminiService';
+import React, { useState, useEffect, useMemo } from 'react';
+import { VocabularyStory, VocabularyChallenge, StoryChunk, UserProfile } from '../types';
+import { generateVocabularyStory, updateUserProfile, getUserProfile } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
-import { CheckCircleIcon } from './IconComponents';
+import { CheckCircleIcon, SparklesIcon } from './IconComponents';
+import { useNotification } from '../contexts/NotificationContext';
 
 // Spaced Repetition System intervals in days
 const srsIntervalsDays = [1, 3, 7, 14, 30, 90, 180];
@@ -13,177 +14,241 @@ const addDays = (date: Date, days: number): Date => {
     return result;
 };
 
+// Fisher-Yates shuffle algorithm
+const shuffleArray = (array: any[]) => {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+};
+
+type GameState = 'loading' | 'playing' | 'reviewing' | 'finished';
+
 const VocabularyBuilder: React.FC = () => {
-    const [allWords, setAllWords] = useState<VocabularyWord[]>([]);
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [studyDeck, setStudyDeck] = useState<VocabularyWord[]>([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isFlipped, setIsFlipped] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [sessionStats, setSessionStats] = useState({ reviewed: 0, new: 0 });
+    const [story, setStory] = useState<VocabularyStory | null>(null);
+    const [gameState, setGameState] = useState<GameState>('loading');
+    const [currentChallengeIndex, setCurrentChallengeIndex] = useState(0);
+    const [userAnswers, setUserAnswers] = useState<string[]>([]);
+    const [selectedOption, setSelectedOption] = useState<string | null>(null);
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+    const { addNotification } = useNotification();
 
-    const fetchAndBuildDeck = async () => {
-        setIsLoading(true);
-        const [fetchedWords, userProfile] = await Promise.all([getVocabularyWords(), getUserProfile()]);
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to start of day
+    const challenges = useMemo(() => {
+        if (!story) return [];
+        return story.chunks.filter(chunk => typeof chunk !== 'string') as { challenge: VocabularyChallenge }[];
+    }, [story]);
 
-        const vocabProgress = userProfile.vocabularyProgress || {};
-        
-        const dueForReview: VocabularyWord[] = [];
-        const newWords: VocabularyWord[] = [];
+    const startNewSession = async () => {
+        setGameState('loading');
+        setUserAnswers([]);
+        setCurrentChallengeIndex(0);
+        setSelectedOption(null);
+        setIsCorrect(null);
+        const [fetchedStory, errorMessage] = await generateVocabularyStory();
 
-        fetchedWords.forEach(word => {
-            const progress = vocabProgress[word.word];
-            if (progress) {
-                const nextReviewDate = new Date(progress.nextReviewDate);
-                if (nextReviewDate <= today) {
-                    dueForReview.push(word);
-                }
-            } else {
-                newWords.push(word);
-            }
-        });
+        if (errorMessage) {
+            addNotification({
+                type: 'info',
+                title: 'Using Default Story',
+                message: errorMessage,
+            });
+        }
 
-        setSessionStats({ reviewed: dueForReview.length, new: newWords.length });
-        setAllWords(fetchedWords);
-        setProfile(userProfile);
-        setStudyDeck([...dueForReview, ...newWords]);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setIsLoading(false);
+        setStory(fetchedStory);
+        setGameState('playing');
     };
 
     useEffect(() => {
-        fetchAndBuildDeck();
+        startNewSession();
     }, []);
 
-    const handleAssessment = async (knewIt: boolean) => {
-        if (!profile) return;
-        
-        const currentWord = studyDeck[currentIndex];
-        const progress = profile.vocabularyProgress || {};
-        const wordProgress = progress[currentWord.word] || { srsStage: 0 };
-        
-        let newSrsStage;
-        if (knewIt) {
-            newSrsStage = wordProgress.srsStage + 1;
-        } else {
-            // Reset progress to the first interval
-            newSrsStage = 0; 
-        }
-        
-        // Use the stage to get the interval, capping at the max defined interval
-        const interval = srsIntervalsDays[Math.min(newSrsStage, srsIntervalsDays.length - 1)];
-        const nextReviewDate = addDays(new Date(), interval);
+    const handleOptionSelect = async (option: string) => {
+        if (selectedOption) return; // Prevent multiple clicks
 
-        const updatedProfile = await updateUserProfile(p => ({
-            ...p,
-            vocabularyProgress: {
-                ...p.vocabularyProgress,
-                [currentWord.word]: {
-                    srsStage: newSrsStage,
-                    nextReviewDate: nextReviewDate.toISOString(),
+        const currentChallenge = challenges[currentChallengeIndex].challenge;
+        setSelectedOption(option);
+
+        const correct = option === currentChallenge.word;
+        setIsCorrect(correct);
+
+        if (correct) {
+            // Update SRS in the background
+            const interval = srsIntervalsDays[0]; // First successful answer
+            const nextReviewDate = addDays(new Date(), interval);
+            await updateUserProfile(p => ({
+                ...p,
+                vocabularyProgress: {
+                    ...p.vocabularyProgress,
+                    [currentChallenge.word]: {
+                        srsStage: 1, // Start at stage 1
+                        nextReviewDate: nextReviewDate.toISOString(),
+                    }
                 }
-            }
-        }));
-        setProfile(updatedProfile);
+            }));
 
-        // Animate flip back and move to the next card
-        setIsFlipped(false);
-        setTimeout(() => {
-            setCurrentIndex(prev => prev + 1);
-        }, 200);
+            // Proceed to next question after a delay
+            setTimeout(() => {
+                setUserAnswers(prev => [...prev, currentChallenge.word]);
+                setCurrentChallengeIndex(prev => prev + 1);
+                setSelectedOption(null);
+                setIsCorrect(null);
+                if (currentChallengeIndex + 1 >= challenges.length) {
+                    setGameState('reviewing');
+                }
+            }, 1500);
+        }
+    };
+    
+    const renderStory = () => {
+        if (!story) return null;
+        
+        let challengeCounter = -1;
+        return (
+            <p className="text-lg/relaxed text-gray-700 dark:text-gray-300">
+                {story.chunks.map((chunk, index) => {
+                    if (typeof chunk === 'string') {
+                        return <span key={index}>{chunk}</span>;
+                    }
+                    challengeCounter++;
+                    if (challengeCounter < currentChallengeIndex) {
+                        return <strong key={index} className="text-blue-600 dark:text-blue-400 font-semibold animate-fade-in">{chunk.challenge.word}</strong>
+                    }
+                    if (challengeCounter === currentChallengeIndex) {
+                        return <span key={index} className="inline-block w-24 h-6 bg-gray-200 dark:bg-slate-700 rounded-md animate-pulse mx-1"></span>
+                    }
+                    return null;
+                })}
+            </p>
+        );
     };
 
-    const SkeletonCard = () => (
-        <div className="p-6 md:p-8 bg-white dark:bg-slate-900 min-h-[50vh] flex flex-col items-center justify-center w-full">
-            <SkeletonLoader className="h-8 w-3/4 mb-8" />
-            <SkeletonLoader className="w-full max-w-md h-64 rounded-xl" />
-            <div className="mt-8 flex items-center gap-4">
-                <SkeletonLoader className="w-64 h-12" />
+    const LoadingView = () => (
+        <div className="w-full max-w-2xl text-center">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Word Weaver</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">Weaving a new story for you to complete...</p>
+            <SkeletonLoader className="h-6 w-3/4 mx-auto mb-4" />
+            <SkeletonLoader className="h-32 w-full mx-auto mb-6" />
+            <div className="grid grid-cols-2 gap-4">
+                <SkeletonLoader className="h-14 w-full rounded-lg" />
+                <SkeletonLoader className="h-14 w-full rounded-lg" />
             </div>
         </div>
     );
     
-    if (isLoading) {
-        return <SkeletonCard />;
-    }
+    const FinishedView = () => (
+        <div className="w-full max-w-2xl text-center animate-fade-in">
+            <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Story Complete!</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2 mb-8">Excellent work! You've learned new words by completing the story.</p>
+            <button
+                onClick={startNewSession}
+                className="select-none px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900"
+            >
+                Start a New Story
+            </button>
+        </div>
+    );
 
-    if (studyDeck.length === 0 || currentIndex >= studyDeck.length) {
+    const ReviewView = () => (
+        <div className="w-full max-w-2xl text-center animate-fade-in">
+             <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Story Complete!</h2>
+             <p className="text-gray-600 dark:text-gray-400 mt-2 mb-6">Here are the words you learned in this story.</p>
+             <div className="space-y-4 text-left">
+                {challenges.map(({ challenge }) => (
+                     <div key={challenge.word} className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-lg border border-gray-200 dark:border-slate-700">
+                        <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400">{challenge.word}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 italic mb-1">{challenge.pronunciation} ({challenge.type})</p>
+                        <p className="text-gray-700 dark:text-gray-300">{challenge.definition}</p>
+                     </div>
+                ))}
+             </div>
+             <button
+                onClick={() => setGameState('finished')}
+                className="select-none mt-8 px-8 py-3 text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800"
+             >
+                Continue
+             </button>
+        </div>
+    );
+
+    const PlayingView = () => {
+        if (!story) return null;
+
+        // FIX: Add a guard to prevent accessing an out-of-bounds index, which causes a crash.
+        // This can happen briefly during the state transition from the last question to the review screen.
+        if (currentChallengeIndex >= challenges.length) {
+            return null;
+        }
+
+        const currentChallenge = challenges[currentChallengeIndex].challenge;
+        const options = useMemo(() => shuffleArray([...currentChallenge.distractors, currentChallenge.word]), [currentChallenge]);
+
         return (
-            <div className="p-6 md:p-8 bg-white dark:bg-slate-900 rounded-lg shadow-lg flex flex-col items-center justify-center min-h-[60vh] text-center animate-fade-in">
-                 <CheckCircleIcon className="w-16 h-16 text-green-500 mb-4" />
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">All Done for Today!</h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">You've reviewed all your due cards. Come back tomorrow for more.</p>
-                <button 
-                    onClick={fetchAndBuildDeck}
-                    className="mt-6 px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                >
-                    Start New Session
-                </button>
-            </div>
-        );
-    }
-    
-    const currentWord = studyDeck[currentIndex];
-
-    return (
-        <div className="p-6 md:p-8 bg-white dark:bg-slate-900 rounded-lg shadow-lg flex flex-col items-center justify-center">
-            <div className="text-center mb-6 w-full max-w-md">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Vocabulary Practice</h2>
-                <div className="flex justify-center gap-6 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span>Review Due: <span className="font-bold text-blue-500">{sessionStats.reviewed}</span></span>
-                    <span>New Cards: <span className="font-bold text-green-500">{sessionStats.new}</span></span>
+            <div className="w-full max-w-2xl animate-fade-in">
+                <div className="text-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{story.title}</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">Choose the correct word to complete the story.</p>
                 </div>
-            </div>
 
-            <div className="w-full max-w-md h-64 perspective">
-                <div 
-                    className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}
-                >
-                    {/* Front of Card */}
-                    <div className="absolute w-full h-full backface-hidden flex items-center justify-center p-6 bg-blue-500 text-white rounded-xl shadow-lg">
-                        <h3 className="text-4xl font-bold">{currentWord.word}</h3>
-                    </div>
-
-                    {/* Back of Card */}
-                    <div className="absolute w-full h-full backface-hidden rotate-y-180 flex flex-col justify-center p-6 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-100 rounded-xl shadow-lg">
-                        <p className="font-semibold text-lg">{currentWord.definition}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 italic">"{currentWord.example}"</p>
-                    </div>
+                <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 my-6">
+                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${(currentChallengeIndex / challenges.length) * 100}%` }}></div>
                 </div>
-            </div>
+                
+                <div className="bg-gray-50 dark:bg-slate-800/50 p-6 rounded-lg border border-gray-200 dark:border-slate-700 mb-6 min-h-[120px]">
+                    {renderStory()}
+                </div>
+                
+                <p className="text-center font-semibold text-gray-800 dark:text-white mb-4">Which word fits best?</p>
 
-            <div className="mt-8 flex items-center justify-center gap-4 h-14 w-full max-w-md">
-                {!isFlipped ? (
-                    <button 
-                        onClick={() => setIsFlipped(true)}
-                        className="px-8 py-3 w-64 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                        Show Answer
-                    </button>
-                ) : (
-                    <div className="flex items-center gap-4 animate-fade-in">
-                        <button 
-                            onClick={() => handleAssessment(false)}
-                            className="px-6 py-3 w-32 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-500 hover:bg-red-600"
-                        >
-                            Again
-                        </button>
-                        <button 
-                            onClick={() => handleAssessment(true)}
-                            className="px-6 py-3 w-32 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600"
-                        >
-                            Good
-                        </button>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {options.map(option => {
+                         const isSelected = selectedOption === option;
+                         const isTheCorrectAnswer = option === currentChallenge.word;
+                         let buttonClass = 'bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 border-gray-300 dark:border-slate-600';
+
+                         if (isSelected) {
+                            buttonClass = isCorrect 
+                                ? 'bg-green-500 border-green-700 text-white' 
+                                : 'bg-red-500 border-red-700 text-white';
+                         } else if (selectedOption && isTheCorrectAnswer) {
+                            buttonClass = 'bg-green-200 dark:bg-green-900/50 border-green-500';
+                         }
+
+                        return (
+                             <button 
+                                key={option}
+                                onClick={() => handleOptionSelect(option)}
+                                disabled={!!selectedOption}
+                                className={`select-none w-full text-center p-4 rounded-lg border-2 font-semibold text-lg transition-all duration-300 ${buttonClass}`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+                
+                {selectedOption && (
+                     <div className="mt-4 p-4 rounded-lg text-center animate-fade-in bg-gray-100 dark:bg-slate-800">
+                        {isCorrect ? (
+                             <p className="font-semibold text-green-700 dark:text-green-300">Correct! <strong className="text-green-800 dark:text-green-200">{currentChallenge.word}</strong> means: "{currentChallenge.definition}"</p>
+                        ) : (
+                            <p className="font-semibold text-red-700 dark:text-red-300">Not quite. Try another option!</p>
+                        )}
+                     </div>
                 )}
             </div>
-             <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 h-5">
-                {isFlipped ? 'How well did you know this word?' : `Card ${currentIndex + 1} of ${studyDeck.length}`}
-             </p>
+        );
+    };
+
+    return (
+        <div className="p-4 md:p-6 bg-white dark:bg-slate-900 rounded-lg shadow-lg flex flex-col items-center justify-center min-h-[70vh]">
+            {gameState === 'loading' && <LoadingView />}
+            {gameState === 'playing' && <PlayingView />}
+            {gameState === 'reviewing' && <ReviewView />}
+            {gameState === 'finished' && <FinishedView />}
         </div>
     );
 };

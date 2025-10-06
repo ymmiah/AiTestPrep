@@ -94,7 +94,7 @@ const GrammarQuiz: React.FC = () => {
                 </p>
                 <button
                     onClick={loadQuiz}
-                    className="px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                    className="select-none px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
                 >
                     Try Another Quiz
                 </button>
@@ -116,7 +116,7 @@ const GrammarQuiz: React.FC = () => {
                     {currentQuestion.options.map((option, index) => {
                         const isSelected = userAnswer === index;
                         const isCorrect = currentQuestion.correctAnswerIndex === index;
-                        let optionClass = 'bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border-gray-300 dark:border-slate-600';
+                        let optionClass = 'bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 border-gray-300 dark:border-slate-600';
                         if(userAnswer !== null) {
                             if(isCorrect) {
                                 optionClass = 'bg-green-100 dark:bg-green-900/50 border-green-500';
@@ -126,7 +126,7 @@ const GrammarQuiz: React.FC = () => {
                         }
                         
                         return (
-                            <button key={index} onClick={() => handleAnswer(index)} disabled={userAnswer !== null} className={`w-full text-left p-3 rounded-md border-2 transition-colors ${optionClass}`}>
+                            <button key={index} onClick={() => handleAnswer(index)} disabled={userAnswer !== null} className={`select-none w-full text-left p-3 rounded-md border-2 transition-colors ${optionClass}`}>
                                 {option}
                             </button>
                         );
@@ -143,7 +143,7 @@ const GrammarQuiz: React.FC = () => {
                 )}
             </div>
             <div className="mt-6 text-right">
-                <button onClick={handleNext} disabled={userAnswer === null} className="px-6 py-2 text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed">
+                <button onClick={handleNext} disabled={userAnswer === null} className="select-none px-6 py-2 text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-300 disabled:cursor-not-allowed">
                     {currentQuestionIndex === quiz.questions.length - 1 ? 'Finish Quiz' : 'Next'}
                 </button>
             </div>

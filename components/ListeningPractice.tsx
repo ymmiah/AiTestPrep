@@ -108,7 +108,7 @@ const ListeningPractice: React.FC = () => {
                                 {q.options.map((option, oIndex) => {
                                     const isSelected = userAnswers[qIndex] === oIndex;
                                     const isCorrect = q.correctAnswerIndex === oIndex;
-                                    let optionClass = 'bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border-gray-300 dark:border-slate-600';
+                                    let optionClass = 'bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 border-gray-300 dark:border-slate-600';
                                     if(isSubmitted) {
                                         if(isCorrect) {
                                             optionClass = 'bg-green-100 dark:bg-green-900/50 border-green-500';
@@ -123,7 +123,7 @@ const ListeningPractice: React.FC = () => {
                                         <button 
                                             key={oIndex}
                                             onClick={() => handleAnswerSelect(qIndex, oIndex)}
-                                            className={`w-full text-left p-3 rounded-md border-2 transition-colors ${optionClass}`}
+                                            className={`select-none w-full text-left p-3 rounded-md border-2 transition-colors ${optionClass}`}
                                             disabled={isSubmitted}
                                         >
                                             {option}
@@ -139,7 +139,7 @@ const ListeningPractice: React.FC = () => {
                     {!isSubmitted ? (
                         <button 
                             onClick={handleSubmit}
-                            className="px-8 py-3 text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                            className="select-none px-8 py-3 text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
                         >
                             Check Answers
                         </button>

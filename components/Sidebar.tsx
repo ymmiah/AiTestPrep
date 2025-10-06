@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from '../App';
+import { View } from '../A2App';
 import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, AcademicCapIcon, CalendarDaysIcon, QuestionMarkCircleIcon, SparklesIcon, UserCircleIcon, TrophyIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
 
 interface SidebarProps {
@@ -16,10 +16,10 @@ const NavItem: React.FC<{
 }> = ({ viewName, label, icon, activeView, setActiveView }) => {
   const isActive = activeView === viewName;
   const buttonClass = `
-    flex items-center w-full px-4 py-3 text-left text-sm font-medium rounded-lg transition-colors duration-200
+    flex items-center w-full px-4 py-3 text-left text-sm font-medium rounded-lg transition-colors duration-200 select-none
     ${isActive
       ? 'bg-blue-500 text-white shadow'
-      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 active:bg-gray-300 dark:active:bg-slate-600'
     }
   `;
 

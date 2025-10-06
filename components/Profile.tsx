@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Badge } from '../types';
-import { getUserProfile, updateUserName, isApiKeySet, setApiKey } from '../services/geminiService';
+import { UserProfile, Badge, ApiConfig, AiProvider } from '../types';
+import { getUserProfile, updateUserName, getApiConfig, saveApiConfig } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
 import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, KeyIcon, EyeIcon, EyeSlashIcon } from './IconComponents';
 
@@ -40,34 +40,35 @@ const ProfileStatCard: React.FC<{ title: string; value: string | number; icon: R
 
 const Profile: React.FC = () => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [apiConfig, setApiConfig] = useState<ApiConfig | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditingName, setIsEditingName] = useState(false);
     const [editingName, setEditingName] = useState('');
-    const [isEditingKey, setIsEditingKey] = useState(false);
+    
+    // State for the new API configuration UI
+    const [selectedProvider, setSelectedProvider] = useState<AiProvider>('gemini');
     const [apiKeyInput, setApiKeyInput] = useState('');
-    const [isKeyCurrentlySet, setIsKeyCurrentlySet] = useState(false);
     const [isKeyVisible, setIsKeyVisible] = useState(false);
 
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
         setIsLoading(true);
-        const data = await getUserProfile();
-        const keyIsSet = isApiKeySet();
-
-        setProfile(data);
-        setEditingName(data.name);
-        setIsKeyCurrentlySet(keyIsSet);
-
-        if (!data.name) {
+        const [profileData, configData] = await Promise.all([getUserProfile(), getApiConfig()]);
+        
+        setProfile(profileData);
+        setEditingName(profileData.name);
+        if (!profileData.name) {
             setIsEditingName(true);
         }
-        if (!keyIsSet) {
-            setIsEditingKey(true);
-        }
+
+        setApiConfig(configData);
+        setSelectedProvider(configData.provider);
+        setApiKeyInput(configData.keys[configData.provider] || '');
+
         setIsLoading(false);
     };
 
     useEffect(() => {
-        fetchProfile();
+        fetchProfileData();
     }, []);
 
     const handleSaveName = async () => {
@@ -85,6 +86,26 @@ const Profile: React.FC = () => {
         setIsEditingName(false);
         setEditingName(profile.name);
     }
+    
+    const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newProvider = e.target.value as AiProvider;
+        setSelectedProvider(newProvider);
+        setApiKeyInput(apiConfig?.keys[newProvider] || '');
+    };
+
+    const handleSaveApiKey = () => {
+        if (!apiConfig) return;
+
+        const newConfig: ApiConfig = {
+            provider: selectedProvider,
+            keys: {
+                ...apiConfig.keys,
+                [selectedProvider]: apiKeyInput.trim(),
+            }
+        };
+        saveApiConfig(newConfig); // This will save and reload the page
+    };
+
 
     const SkeletonProfile = () => (
         <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg">
@@ -112,17 +133,23 @@ const Profile: React.FC = () => {
         </div>
     );
 
-    if (isLoading || !profile) {
+    if (isLoading || !profile || !apiConfig) {
         return <SkeletonProfile />;
     }
     
     const { progressStats } = profile;
     const learnedWordsCount = Object.keys(profile.vocabularyProgress || {}).length;
+    const providerNames: { [key in AiProvider]: string } = {
+        gemini: 'Google Gemini',
+        openai: 'OpenAI',
+        anthropic: 'Anthropic'
+    };
+
 
     return (
         <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
-            <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-10">
+            <div className="max-w-3xl mx-auto space-y-10">
+                <div className="text-center">
                     <img
                         className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-lg"
                         src={`https://api.dicebear.com/8.x/initials/svg?seed=${profile.name || 'default-avatar'}`}
@@ -141,8 +168,8 @@ const Profile: React.FC = () => {
                                     onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                                 />
                                 <div className="flex items-center gap-2 mt-2">
-                                    <button onClick={handleSaveName} className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm font-semibold">Save</button>
-                                    {profile.name && <button onClick={handleCancelName} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 text-sm font-semibold">Cancel</button>}
+                                    <button onClick={handleSaveName} className="select-none px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 active:bg-green-700 text-sm font-semibold">Save</button>
+                                    {profile.name && <button onClick={handleCancelName} className="select-none px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 active:bg-gray-400 text-sm font-semibold">Cancel</button>}
                                 </div>
                                 {!profile.name && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Please set your name to save progress.</p>}
                             </div>
@@ -173,7 +200,7 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
-                 <div className="mb-10">
+                 <div>
                     <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">My Progress</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <ProfileStatCard title="Sessions Completed" value={progressStats.sessionsCompleted} icon={<ChatBubbleIcon className="w-5 h-5" />} />
@@ -183,7 +210,7 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mb-10">
+                <div>
                     <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">My Badges</h3>
                     {profile.badges.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -199,64 +226,62 @@ const Profile: React.FC = () => {
                 <div>
                     <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                         <KeyIcon className="w-6 h-6" />
-                        API Key Configuration
+                        AI Model Configuration
                     </h3>
-                    <div className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700">
-                        {isEditingKey ? (
-                            <div>
-                                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Your Gemini API Key
-                                </label>
-                                <div className="relative mt-1">
-                                    <input
-                                        type={isKeyVisible ? 'text' : 'password'}
-                                        id="api-key"
-                                        value={apiKeyInput}
-                                        onChange={(e) => setApiKeyInput(e.target.value)}
-                                        placeholder="Enter your API key here"
-                                        className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsKeyVisible(!isKeyVisible)}
-                                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                        aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
-                                    >
-                                        {isKeyVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                                    </button>
-                                </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                    Your key is stored in your browser's local storage and is not sent to any servers. Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>.
-                                </p>
-                                <div className="flex items-center gap-2 mt-4">
-                                    <button
-                                        onClick={() => setApiKey(apiKeyInput)}
-                                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm font-semibold disabled:bg-green-300"
-                                        disabled={!apiKeyInput.trim()}
-                                    >
-                                        Save & Reload
-                                    </button>
-                                    {isKeyCurrentlySet && (
-                                        <button onClick={() => { setIsEditingKey(false); setIsKeyVisible(false); }} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 text-sm font-semibold">
-                                            Cancel
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-medium text-gray-800 dark:text-gray-100">Your Gemini API key is configured.</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">The app is ready for use.</p>
-                                </div>
+                    <div className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700 space-y-4">
+                        <div>
+                            <label htmlFor="ai-provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                AI Provider
+                            </label>
+                            <select
+                                id="ai-provider"
+                                value={selectedProvider}
+                                onChange={handleProviderChange}
+                                className="mt-1 w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="gemini">Google Gemini</option>
+                                <option value="openai" disabled>OpenAI (Coming Soon)</option>
+                                <option value="anthropic" disabled>Anthropic (Coming Soon)</option>
+                            </select>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                Note: This application is currently optimized for Google Gemini. Support for other providers is in development.
+                            </p>
+                        </div>
+                         <div>
+                            <label htmlFor="api-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                               Your {providerNames[selectedProvider]} API Key
+                            </label>
+                            <div className="relative mt-1">
+                                <input
+                                    type={isKeyVisible ? 'text' : 'password'}
+                                    id="api-key"
+                                    value={apiKeyInput}
+                                    onChange={(e) => setApiKeyInput(e.target.value)}
+                                    placeholder={`Enter your ${providerNames[selectedProvider]} key`}
+                                    className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                />
                                 <button
-                                    onClick={() => { setApiKeyInput(''); setIsEditingKey(true); }}
-                                    className="px-4 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 rounded-md hover:bg-blue-200 text-sm font-semibold"
+                                    type="button"
+                                    onClick={() => setIsKeyVisible(!isKeyVisible)}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
                                 >
-                                    Change Key
+                                    {isKeyVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                                 </button>
                             </div>
-                        )}
+                        </div>
+                        <div>
+                            <button
+                                onClick={handleSaveApiKey}
+                                className="select-none w-full sm:w-auto px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 active:bg-green-700 text-sm font-semibold disabled:bg-green-300"
+                                disabled={!apiKeyInput.trim()}
+                            >
+                                Save & Reload
+                            </button>
+                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                Your key is stored securely in your browser's local storage.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

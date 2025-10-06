@@ -1,16 +1,21 @@
-# UK Spouse Visa A2 English Test Prep
+# AI Language Test Prep Platform
 
 ## 1. Project Overview
 
-The UK Spouse Visa A2 English Test Prep is an advanced, AI-powered web application designed to help users prepare for the A2 English language test required for the UK Spouse Visa. It provides an immersive, gamified, and interactive learning experience by simulating the conversational part of the exam.
+The AI Language Test Prep Platform is an advanced, AI-powered web application designed to help users prepare for major English language proficiency exams. It provides an immersive, gamified, and interactive learning experience by simulating the conversational parts of the exams and offering comprehensive skill-building modules.
 
-The application's core is a voice-to-voice chat where users speak with an AI examiner. The AI, powered by Google Gemini, listens to the user's response, replies with a natural-sounding voice, and provides instant, targeted feedback on their performance. This creates a realistic and effective practice environment to build speaking confidence and proficiency.
+The application is structured into distinct modules for different exams, starting with:
+
+1.  **UK Spouse Visa A2 English Test Prep:** The original core of the application, featuring a voice-to-voice chat where users speak with an AI examiner. The AI, powered by Google Gemini, provides instant, targeted feedback on performance, creating a realistic and effective practice environment.
+2.  **IELTS Exam Preparation:** A comprehensive suite of tools to help users prepare for the IELTS Academic & General Training tests. This module includes practice for all four sections of the exam.
+
+This modular architecture allows for easy expansion to include other language tests in the future.
 
 ## 2. Core Features
 
 The application is a comprehensive toolkit with modules targeting every aspect of the A2 test.
 
-### AI Conversation Simulator (The Core Experience)
+### AI Conversation Simulator (A2 Test Prep)
 
 *   **Voice-to-Voice Interaction:** Users engage in a full conversational experience by speaking to the AI and listening to its spoken responses, creating a true-to-life practice session.
 *   **Realistic Scenarios:** Practice across a variety of contexts, including:
@@ -21,7 +26,7 @@ The application is a comprehensive toolkit with modules targeting every aspect o
 *   **Intelligent UI:** The microphone button dynamically changes its state to guide the user, indicating when it's listening, when the AI is processing, and when the AI is speaking.
 *   **Conversation Helpers:** Users can get an "Idea" for how to answer a question or an "Improved" version of their last answer, powered by Gemini.
 
-### Full Mock A2 Exam
+### Full Mock A2 Exam (A2 Test Prep)
 
 *   **Timed Simulation:** A full, 7-minute timed simulation of the official speaking test.
 *   **Structured Format:** Follows a comprehensive 4-part structure: a personal Introduction, a detailed Picture Description, and two distinct Topic-based Conversations.
@@ -29,7 +34,7 @@ The application is a comprehensive toolkit with modules targeting every aspect o
 *   **Final Assessment:** At the end of the test, Gemini provides a comprehensive final assessment, including an overall score, detailed feedback, strengths, and areas for improvement.
 *   **Transcript Review:** Users can review the full transcript of their mock test, with the option to get AI-powered improvements for each of their answers.
 
-### Comprehensive Skill Development Modules
+### Comprehensive Skill Development Modules (A2 Test Prep)
 
 *   **Pronunciation Practice:** A dedicated module where the AI generates short, common English phrases. Users can practice saying these phrases and receive immediate, word-by-word feedback on their pronunciation, helping them master specific sounds.
 *   **Vocabulary Builder:** An interactive flashcard system using a Spaced Repetition System (SRS) to help users learn and memorize new English words efficiently.
@@ -38,12 +43,22 @@ The application is a comprehensive toolkit with modules targeting every aspect o
     *   **Common Mistakes:** A list of frequent grammatical errors with correct examples and clear explanations.
     *   **Grammar Quiz:** An interactive quiz to test and reinforce grammatical knowledge.
 
-### Personalized AI-Powered Tools
+### IELTS Exam Preparation
+
+A comprehensive suite of tools to help users prepare for the IELTS Academic & General Training tests. This module includes practice for all four sections of the exam.
+
+*   **Writing Practice:** Users can select either Task 1 (report writing) or Task 2 (essay writing) to receive an AI-generated prompt. After submitting their text, they get an instant, detailed analysis from Gemini, including an estimated band score and feedback on the four official criteria: Task Achievement, Coherence and Cohesion, Lexical Resource, and Grammatical Range and Accuracy.
+*   **Listening Practice:** [Under Development] Interactive exercises with a variety of audio clips and question types to improve comprehension.
+*   **Reading Practice:** [Under Development] Practice with authentic academic and general training texts and targeted exercises to boost reading speed and accuracy.
+*   **Speaking Practice:** [Under Development] A simulation of the three-part IELTS speaking test with an AI examiner, providing detailed feedback on fluency, pronunciation, and more.
+*   **Full Mock Test:** [Under Development] A full, timed IELTS simulation covering all four sections to test readiness and time management.
+
+### Personalized AI-Powered Tools (A2 Test Prep)
 
 *   **Study Planner:** Generates a personalized, week-by-week study schedule based on the user's upcoming test date and weekly availability.
 *   **Topic Generator:** Creates common exam questions and provides high-quality example answers for various topics like "Family," "Hobbies," and "Food."
 
-### Gamification and Motivation
+### Gamification and Motivation (A2 Test Prep)
 
 *   **Points System:** Users earn points for high-quality conversational responses and for completing quizzes, encouraging consistent practice.
 *   **Badges & Achievements:** Milestones are recognized with unlockable badges (e.g., "Grammar Guru" for a perfect quiz score), which are displayed on the user's profile.
@@ -52,6 +67,7 @@ The application is a comprehensive toolkit with modules targeting every aspect o
 
 ### Polished User Experience
 
+*   **Modular Design:** A central landing page allows users to select which exam they want to prepare for.
 *   **Fully Responsive Design:** The application provides a seamless experience on both desktop and mobile devices, with a dedicated sidebar for large screens and a bottom navigation bar for smaller screens.
 *   **Dark/Light Mode:** A theme switcher allows users to choose their preferred visual mode for comfortable viewing.
 *   **Toast Notifications:** A non-intrusive notification system provides elegant alerts for rewards, points earned, and achievements unlocked.
@@ -65,10 +81,11 @@ The application is a comprehensive toolkit with modules targeting every aspect o
     *   **Text-to-Speech:** The browser's native **Web Speech API (`SpeechSynthesis`)** provides the AI's spoken responses in a natural British English voice.
 *   **Styling:** **Tailwind CSS** for a utility-first, responsive, and easily maintainable design system.
 *   **Architecture:**
-    *   **Component-Based:** The UI is broken down into reusable components (e.g., `ConversationSimulator`, `FeedbackCard`, `MessageBubble`, `MockTest`).
+    *   **Modular Router:** A top-level React component (`App.tsx`) acts as a router to switch between the main application modules (Landing Page, A2 App, IELTS App). Each module (like `IELTSPrep.tsx`) can contain its own internal routing to manage its specific views.
+    *   **Component-Based:** The UI is broken down into reusable components (e.g., `ConversationSimulator`, `FeedbackCard`, `MessageBubble`, `IELTSWriting`).
     *   **Custom Hooks:** Complex browser APIs are encapsulated in custom hooks (`useSpeechRecognition`, `useTextToSpeech`) to keep component logic clean and manageable.
     *   **Service Layer:** All AI interactions and user data management are abstracted into a dedicated service file (`geminiService.ts`), separating business logic from the UI.
-    *   **Context API:** React's Context API (`NotificationContext`) is used for global state management of the notification system.
+    *   **Context API:** React's Context API (`NotificationContext`) is used for global state management of the notification system within each module.
     *   **Data Persistence:** User profile data, progress, and conversation history are persisted in the browser's **LocalStorage**.
 *   **Build & Dependencies:** A **zero-build setup**. All dependencies (React, @google/genai) are loaded efficiently from a CDN using an `importmap` in `index.html`.
 
@@ -116,9 +133,9 @@ There are two ways to provide your key:
 
 **Method 1: Via the Application UI (Recommended for Users)**
 The easiest way to add your key is directly in the application.
-1.  Launch the application.
+1.  Launch the application and select the **A2 Test Prep** module.
 2.  Navigate to the **My Profile** page.
-3.  Scroll down to the "API Key Configuration" section.
+3.  Scroll down to the "AI Model Configuration" section.
 4.  Paste your API key into the input field and click "Save & Reload".
 Your key will be stored securely in your browser's local storage for future use. This key will take priority over any other configuration method.
 

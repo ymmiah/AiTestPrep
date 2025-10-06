@@ -82,7 +82,7 @@ const StudyPlanCreator: React.FC = () => {
                         <button 
                             type="submit"
                             disabled={isLoading}
-                            className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed dark:focus:ring-offset-slate-900"
+                            className="select-none inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed dark:focus:ring-offset-slate-900"
                         >
                             {isLoading ? 'Generating Plan...' : 'Generate My Plan'}
                         </button>

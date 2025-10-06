@@ -1,5 +1,3 @@
-import { LiveServerMessage } from '@google/genai';
-
 export enum Role {
   USER = 'user',
   MODEL = 'model',
@@ -39,7 +37,26 @@ export interface VocabularyWord {
   word: string;
   definition: string;
   example: string;
+  type: string; // e.g., 'noun', 'verb'
+  pronunciation: string; // e.g., /dɪˈlɪʃəs/
 }
+
+// New types for the story-based Vocabulary Builder
+export interface VocabularyChallenge {
+  word: string;
+  definition: string;
+  type: string;
+  pronunciation: string;
+  distractors: string[]; // Incorrect words for multiple-choice
+}
+
+export type StoryChunk = string | { challenge: VocabularyChallenge };
+
+export interface VocabularyStory {
+  title: string;
+  chunks: StoryChunk[];
+}
+
 
 export interface ListeningQuestion {
   question: string;
@@ -156,4 +173,51 @@ export interface WordFeedback {
 export interface PronunciationFeedback {
     overallFeedback: string;
     wordAnalysis: WordFeedback[];
+}
+
+// API Configuration Types
+export type AiProvider = 'gemini' | 'openai' | 'anthropic';
+
+export interface ApiConfig {
+    provider: AiProvider;
+    keys: {
+        gemini?: string;
+        openai?: string;
+        anthropic?: string;
+    };
+}
+
+// IELTS Types
+export interface IELTSWritingFeedback {
+  overallBand: number;
+  taskAchievement: { score: number; feedback: string; };
+  coherenceAndCohesion: { score: number; feedback:string; };
+  lexicalResource: { score: number; feedback: string; };
+  grammaticalRangeAndAccuracy: { score: number; feedback: string; };
+  suggestedImprovements: string;
+}
+
+export interface IELTSListeningFormQuestion {
+    questionType: 'FORM';
+    questionNumber: number;
+    questionText: string; // e.g., "Name of caller: _____"
+    correctAnswer: string;
+}
+
+export interface IELTSListeningMCQ {
+    questionType: 'MCQ';
+    questionNumber: number;
+    questionText: string;
+    options: string[];
+    correctAnswer: string; // The text of the correct option
+}
+
+export type IELTSListeningQuestion = IELTSListeningFormQuestion | IELTSListeningMCQ;
+
+
+export interface IELTSListeningExercise {
+    title: string;
+    audioDuration: number; // Estimated duration in seconds
+    script: string;
+    questions: IELTSListeningQuestion[];
 }
