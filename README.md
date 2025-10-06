@@ -62,9 +62,11 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
     -   Instant, detailed analysis from Gemini, including an estimated band score and feedback on the four official criteria.
 -   **Listening Practice:**
     -   AI-generated exercises with a variety of audio clips and question types (MCQ, Form Completion).
+-   **Reading Practice:**
+    -   Tackle authentic AI-generated passages with a variety of question types like Multiple Choice and True/False/Not Given.
+-   **Speaking Practice:**
+    -   Practice the full 3-part speaking test. Receive an AI-generated topic cue card for Part 2 and guiding questions for Parts 1 and 3. Record your full response and get a detailed band score analysis based on official IELTS criteria.
 -   **Coming Soon:**
-    -   Reading Practice
-    -   Speaking Practice
     -   Full Mock Test
 
 ###  plataforma-wide-features Platform-Wide Features
@@ -189,8 +191,6 @@ The platform's build system will securely make this variable available to the ap
 ## 🗺️ Roadmap & Future Enhancements
 
 -   [ ] **Complete IELTS Module:**
-    -   [ ] Reading Practice
-    -   [ ] Speaking Practice
     -   [ ] Full Mock Test
 -   [ ] **User Accounts & Database:**
     -   Implement a backend (e.g., Firebase, Supabase) for user authentication and data persistence across devices.

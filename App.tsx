@@ -45,7 +45,7 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="h-full bg-slate-100 dark:bg-slate-900 text-gray-800 dark:text-gray-100 font-sans">
+        <div className="h-full bg-slate-50 dark:bg-slate-950 text-gray-800 dark:text-gray-100 font-sans">
             {renderModule()}
         </div>
     );

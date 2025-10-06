@@ -120,22 +120,22 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack }) => {
 
   return (
     <NotificationContext.Provider value={{ addNotification, removeNotification }}>
-      <div className="h-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans animate-fade-in">
+      <div className="h-full bg-slate-50 dark:bg-slate-950 text-gray-800 dark:text-gray-100 font-sans animate-fade-in">
         <NotificationContainer notifications={notifications} />
         <div className="flex h-full">
           <Sidebar activeView={activeView} setActiveView={setActiveView} />
           
           <div className="flex-1 flex flex-col h-full">
-            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 md:py-6 md:px-8 bg-white dark:bg-slate-900">
+            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-200/80 dark:border-slate-800/80 md:py-6 md:px-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={onGoBack} 
-                  className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-slate-600 transition-colors"
+                  className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 active:bg-slate-300 dark:active:bg-slate-700 transition-colors"
                   aria-label="Back to main menu"
                 >
                     <ArrowLeftIcon className="w-6 h-6" />
                 </button>
-                <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100">
+                <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100">
                   {viewTitles[activeView]}
                 </h1>
               </div>
@@ -143,8 +143,10 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack }) => {
                 <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
               </div>
             </header>
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
-              {renderView()}
+            <main className="flex-1 overflow-y-auto">
+              <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto">
+                 {renderView()}
+              </div>
             </main>
           </div>
           

@@ -221,3 +221,46 @@ export interface IELTSListeningExercise {
     script: string;
     questions: IELTSListeningQuestion[];
 }
+
+// IELTS Reading Types
+export interface IELTSReadingMCQ {
+    questionType: 'MCQ';
+    questionText: string;
+    options: string[];
+    correctAnswer: string; // The text of the correct option
+}
+
+export interface IELTSReadingTFNG {
+    questionType: 'TFNG';
+    statement: string;
+    correctAnswer: 'TRUE' | 'FALSE' | 'NOT GIVEN';
+}
+
+export type IELTSReadingQuestion = IELTSReadingMCQ | IELTSReadingTFNG;
+
+export interface IELTSReadingExercise {
+    title: string;
+    passage: string;
+    questions: IELTSReadingQuestion[];
+}
+
+// IELTS Speaking Types
+export interface IELTSCueCard {
+    topic: string;
+    points: string[]; // e.g., ["Describe...", "Say who...", "Explain why..."]
+}
+
+export interface IELTSSpeakingScript {
+    part1Questions: string[];
+    part2CueCard: IELTSCueCard;
+    part3Questions: string[];
+}
+
+export interface IELTSSpeakingFeedback {
+  overallBand: number;
+  fluencyAndCoherence: { score: number; feedback: string; };
+  lexicalResource: { score: number; feedback: string; };
+  grammaticalRangeAndAccuracy: { score: number; feedback: string; };
+  pronunciation: { score: number; feedback: string; };
+  suggestedImprovements: string;
+}

@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, ApiConfig, AiProvider, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, ApiConfig, AiProvider, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -984,6 +984,227 @@ You MUST respond with a JSON object that strictly adheres to the provided schema
     }
 };
 
+// FIX: Add missing function 'generateIELTSReadingExercise' to resolve import error.
+const ieltsReadingExerciseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING, description: "A realistic title for an IELTS Academic Reading passage." },
+        passage: { type: Type.STRING, description: "A full academic-style reading passage of about 300-400 words on a common topic like science, history, or social studies." },
+        questions: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    questionType: { type: Type.STRING, description: "The type of question, either 'MCQ' (multiple choice) or 'TFNG' (True/False/Not Given)." },
+                    questionText: { type: Type.STRING, description: "The text for the MCQ question." },
+                    statement: { type: Type.STRING, description: "The statement for the TFNG question." },
+                    options: { 
+                        type: Type.ARRAY, 
+                        items: { type: Type.STRING },
+                        description: "An array of 4 string options for MCQ questions."
+                    },
+                    correctAnswer: { type: Type.STRING, description: "The correct answer. For 'MCQ', it's the text of the correct option. For 'TFNG', it's 'TRUE', 'FALSE', or 'NOT GIVEN'." }
+                },
+                required: ["questionType", "correctAnswer"]
+            }
+        }
+    },
+    required: ["title", "passage", "questions"]
+};
+
+export const generateIELTSReadingExercise = async (): Promise<IELTSReadingExercise> => {
+    const prompt = `You are an expert IELTS test creator. Generate a complete, unique IELTS Academic Reading exercise.
+The exercise must contain a mix of question types based on a single reading passage.
+You must provide the following in a single JSON object:
+1.  A realistic title for the passage.
+2.  A full academic-style reading passage between 300 and 400 words.
+3.  A set of exactly 5 questions based on the passage:
+    - 2 questions of type 'MCQ' (multiple choice). These must have a 'questionText' and an 'options' array with 4 choices.
+    - 3 questions of type 'TFNG' (True/False/Not Given). These must have a 'statement'.
+You MUST respond with a JSON object that strictly adheres to the provided schema. For MCQs, provide 'questionText' and 'options'. For TFNGs, provide 'statement'.`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: ieltsReadingExerciseSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as IELTSReadingExercise;
+        if (!parsed.title || !parsed.questions || parsed.questions.length === 0) {
+            throw new Error("Invalid reading exercise format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate a reading exercise.");
+        console.error("Reading exercise generation failed:", errorMessage);
+        // Fallback data
+        return {
+            title: "The Rise of Artificial Intelligence",
+            passage: "Artificial intelligence (AI) is a branch of computer science that aims to create intelligent machines. It has become an essential part of the technology industry. Research in AI is highly technical and specialized. The core problems of artificial intelligence include programming computers for certain traits such as: Knowledge, Reasoning, Problem solving, Perception, Learning, Planning, Ability to manipulate and move objects. AI is a broad field, and its applications are numerous. One of the key applications is in the development of self-driving cars. These cars use a combination of sensors, cameras, and AI algorithms to navigate roads without human intervention. Another significant application is in the field of medicine, where AI is used to diagnose diseases more accurately and to develop personalized treatment plans. Despite its potential, AI also raises ethical concerns. Issues such as job displacement due to automation, the potential for biased algorithms, and the misuse of AI in surveillance are topics of ongoing debate among experts and policymakers.",
+            questions: [
+                { questionType: 'MCQ', questionText: "What is the main purpose of AI?", options: ["To create video games", "To create intelligent machines", "To build faster computers", "To design websites"], correctAnswer: "To create intelligent machines" },
+                { questionType: 'MCQ', questionText: "Which of the following is NOT listed as a core problem of AI?", options: ["Learning", "Reasoning", "Data storage", "Perception"], correctAnswer: "Data storage" },
+                { questionType: 'TFNG', statement: "Self-driving cars rely solely on cameras to navigate.", correctAnswer: 'FALSE' },
+                { questionType: 'TFNG', statement: "AI is used in medicine for disease diagnosis.", correctAnswer: 'TRUE' },
+                { questionType: 'TFNG', statement: "The passage states that AI has no ethical concerns.", correctAnswer: 'FALSE' },
+            ]
+        };
+    }
+};
+
+// FIX: Add missing function 'generateIELTSSpeakingScript' to resolve import error.
+const ieltsSpeakingScriptSchema = {
+    type: Type.OBJECT,
+    properties: {
+        part1Questions: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "A list of 4-5 introductory questions on a common topic like hometown, work, or studies."
+        },
+        part2CueCard: {
+            type: Type.OBJECT,
+            properties: {
+                topic: { type: Type.STRING, description: "The main topic for the cue card, e.g., 'Describe a memorable holiday you have had.'" },
+                points: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: "A list of 3-4 bullet points the user should talk about, e.g., 'You should say: where you went, who you were with, what you did'."
+                }
+            },
+            required: ["topic", "points"]
+        },
+        part3Questions: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "A list of 4-5 follow-up discussion questions related to the topic in Part 2."
+        }
+    },
+    required: ["part1Questions", "part2CueCard", "part3Questions"]
+};
+
+export const generateIELTSSpeakingScript = async (): Promise<IELTSSpeakingScript> => {
+    const prompt = `You are an IELTS test content creator. Generate a complete, unique script for an IELTS Speaking test, covering all three parts. You MUST respond with a JSON object that strictly adheres to the provided schema. The topics should be common and suitable for a general audience.`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: ieltsSpeakingScriptSchema
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as IELTSSpeakingScript;
+        if (!parsed.part1Questions || !parsed.part2CueCard || !parsed.part3Questions) {
+            throw new Error("Invalid speaking script format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate a speaking script.");
+        console.error("Speaking script generation failed:", errorMessage);
+        return {
+            part1Questions: ["Let's talk about your hometown. Where is it?", "What's the most interesting part of your town?", "What kind of jobs do people do there?", "Do you think it's a good place to live?"],
+            part2CueCard: {
+                topic: "Describe a website you use often.",
+                points: ["You should say:", "what the website is", "how you found out about it", "what you use it for", "and explain why you use it so often."]
+            },
+            part3Questions: ["What are some of the advantages and disadvantages of the internet?", "Do you think older people and younger people use the internet for different things?", "How has the internet changed social interaction?", "Do you think the internet is a safe place for children?"]
+        };
+    }
+};
+
+// FIX: Add missing function 'getIELTSSpeakingFeedback' to resolve import error.
+const ieltsSpeakingFeedbackSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overallBand: { type: Type.NUMBER, description: "The overall band score from 1-9, as an average of the four criteria, rounded to the nearest 0.5." },
+        fluencyAndCoherence: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Fluency and Coherence (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on fluency, use of cohesive devices, and logical flow of ideas." }
+            },
+            required: ["score", "feedback"]
+        },
+        lexicalResource: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Lexical Resource (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on the range of vocabulary, accuracy, and appropriate use of words." }
+            },
+            required: ["score", "feedback"]
+        },
+        grammaticalRangeAndAccuracy: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Grammatical Range and Accuracy (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on the range and accuracy of grammatical structures." }
+            },
+            required: ["score", "feedback"]
+        },
+        pronunciation: {
+            type: Type.OBJECT,
+            properties: {
+                score: { type: Type.NUMBER, description: "Band score for Pronunciation (1-9)." },
+                feedback: { type: Type.STRING, description: "Detailed feedback on pronunciation features like intonation, stress, and individual sounds." }
+            },
+            required: ["score", "feedback"]
+        },
+        suggestedImprovements: {
+            type: Type.STRING,
+            description: "A concise, bulleted list of the top 2-3 most important suggestions for improvement. Use newline characters ('\n') to separate bullet points."
+        }
+    },
+    required: ["overallBand", "fluencyAndCoherence", "lexicalResource", "grammaticalRangeAndAccuracy", "pronunciation", "suggestedImprovements"]
+};
+
+export const getIELTSSpeakingFeedback = async (transcript: string, script: IELTSSpeakingScript): Promise<IELTSSpeakingFeedback> => {
+    const apiPrompt = `You are an expert IELTS examiner. Analyze the user's spoken transcript in response to the provided IELTS Speaking test script.
+Provide a detailed assessment based on the official IELTS Speaking scoring criteria in a structured JSON format.
+
+**Speaking Test Script:**
+Part 1: ${script.part1Questions.join(' ')}
+Part 2: ${script.part2CueCard.topic} - ${script.part2CueCard.points.join(' ')}
+Part 3: ${script.part3Questions.join(' ')}
+
+**User's Full Transcript:**
+${transcript}
+
+You MUST respond with a JSON object that adheres to the schema. For each criterion, provide a band score from 1-9 and specific, constructive feedback. The overall band score should be an average of the four criteria, rounded to the nearest 0.5. The suggested improvements should be a bulleted list.`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: apiPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: ieltsSpeakingFeedbackSchema,
+            }
+        });
+
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as IELTSSpeakingFeedback;
+        if (!parsed.overallBand) {
+            throw new Error("Invalid feedback format from API.");
+        }
+        return parsed;
+
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate speaking feedback.");
+        return {
+            overallBand: 0,
+            fluencyAndCoherence: { score: 0, feedback: errorMessage },
+            lexicalResource: { score: 0, feedback: errorMessage },
+            grammaticalRangeAndAccuracy: { score: 0, feedback: errorMessage },
+            pronunciation: { score: 0, feedback: errorMessage },
+            suggestedImprovements: "There was an error generating suggestions. Please try again."
+        };
+    }
+};
 
 // --- Other Mock Service Functions ---
 

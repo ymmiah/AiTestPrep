@@ -18,8 +18,8 @@ const NavItem: React.FC<{
   const buttonClass = `
     flex items-center w-full px-4 py-3 text-left text-sm font-medium rounded-lg transition-colors duration-200 select-none
     ${isActive
-      ? 'bg-blue-500 text-white shadow'
-      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 active:bg-gray-300 dark:active:bg-slate-600'
+      ? 'bg-indigo-600 text-white shadow-md'
+      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 active:bg-slate-300 dark:active:bg-slate-700'
     }
   `;
 
@@ -55,14 +55,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800">
-      <div className="flex items-center justify-center h-20 border-b border-gray-200 dark:border-slate-800">
-        <div className="flex items-center gap-2 text-xl font-bold text-blue-600 dark:text-blue-400">
+    <aside className="hidden md:flex flex-col w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-r border-slate-200 dark:border-slate-800">
+      <div className="flex items-center justify-center h-20 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+        <div className="flex items-center gap-2 text-xl font-bold text-indigo-600 dark:text-indigo-400">
             <SparklesIcon className="w-7 h-7" />
             <span>A2 Test Prep</span>
         </div>
       </div>
-      <nav className="flex-1 p-4 space-y-6">
+      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
         <ul className="space-y-2">
           {mainNavItems.map(item => (
             <NavItem
@@ -76,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
           ))}
         </ul>
         <div>
-            <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Gamification</h3>
+            <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gamification</h3>
             <ul className="mt-2 space-y-2">
                 {profileNavItems.map(item => (
                     <NavItem
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
             </ul>
         </div>
          <div>
-            <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tools</h3>
+            <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tools</h3>
             <ul className="mt-2 space-y-2">
                 {toolsNavItems.map(item => (
                     <NavItem
@@ -106,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
             </ul>
         </div>
       </nav>
-      <footer className="p-4 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-slate-800">
+      <footer className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
         <p>&copy; 2024 AI Studio Builder.</p>
       </footer>
     </aside>

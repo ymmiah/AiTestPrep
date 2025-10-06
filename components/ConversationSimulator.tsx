@@ -209,9 +209,9 @@ const ConversationSimulator: React.FC = () => {
 
   if (!hasRecognitionSupport) {
     return (
-        <div className="flex flex-col h-full items-center justify-center p-6 text-center bg-white dark:bg-slate-900 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold text-red-500 dark:text-red-400">Speech Recognition Not Supported</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <div className="flex flex-col h-full items-center justify-center p-6 text-center bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+            <h2 className="text-xl font-semibold text-rose-500 dark:text-rose-400">Speech Recognition Not Supported</h2>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">
                 Sorry, your browser does not support the Web Speech API. Please try using a recent version of Google Chrome.
             </p>
         </div>
@@ -232,31 +232,31 @@ const ConversationSimulator: React.FC = () => {
         case 'feedback':
             return <FeedbackCard feedback={feedback} />;
         case 'idea':
-            return <p className="text-gray-700 dark:text-gray-300 p-4">{generatedIdea}</p>;
+            return <p className="text-slate-700 dark:text-slate-300 p-4">{generatedIdea}</p>;
         case 'improvement':
-            return <p className="text-gray-700 dark:text-gray-300 p-4">{improvedAnswer}</p>;
+            return <p className="text-slate-700 dark:text-slate-300 p-4">{improvedAnswer}</p>;
         default:
             return null;
     }
   };
 
   const showFeedbackControls = feedback && !isProcessing && !isSpeaking && !isListening;
-  const sideButtonStyle = "select-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed scale-100 hover:scale-105 active:scale-95";
+  const sideButtonStyle = "select-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed scale-100 hover:scale-105 active:scale-95";
 
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-lg shadow-lg overflow-hidden">
-      <div className="flex-shrink-0 p-4 sm:p-5 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="flex-shrink-0 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="flex-1">
-                <label htmlFor="scenario" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="scenario" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Choose a Scenario
                 </label>
                 <select
                     id="scenario"
                     value={scenario}
                     onChange={(e) => setScenario(e.target.value as Scenario)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-slate-100"
                     disabled={isAiTurn || isListening}
                 >
                     <option value="default">General Q&A</option>
@@ -271,7 +271,7 @@ const ConversationSimulator: React.FC = () => {
                     <button
                         onClick={handleLoadConversation}
                         disabled={isAiTurn || isListening}
-                        className="select-none flex items-center justify-center gap-2 px-3 h-10 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900 active:bg-blue-300 dark:active:bg-blue-800 text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="select-none flex items-center justify-center gap-2 px-3 h-10 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-900 active:bg-indigo-300 dark:active:bg-indigo-800 text-sm font-semibold transition-colors disabled:opacity-50"
                         title="Resume previous chat for this scenario"
                     >
                         <DocumentArrowDownIcon className="w-5 h-5" />
@@ -280,7 +280,7 @@ const ConversationSimulator: React.FC = () => {
                      <button
                         onClick={handleClearHistory}
                         disabled={isAiTurn || isListening}
-                        className="select-none flex items-center justify-center gap-2 p-2 h-10 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 rounded-md hover:bg-red-200 dark:hover:bg-red-900 active:bg-red-300 dark:active:bg-red-800 text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="select-none flex items-center justify-center gap-2 p-2 h-10 bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200 rounded-md hover:bg-rose-200 dark:hover:bg-rose-900 active:bg-rose-300 dark:active:bg-rose-800 text-sm font-semibold transition-colors disabled:opacity-50"
                         title="Delete chat history for this scenario"
                     >
                         <TrashIcon className="w-5 h-5" />
@@ -301,7 +301,7 @@ const ConversationSimulator: React.FC = () => {
         ))}
         {isProcessing && (
             <div className="flex justify-start">
-                <div className="px-4 py-3 rounded-2xl bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-gray-400 self-start shadow-md animate-pulse">
+                <div className="px-4 py-3 rounded-2xl bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 self-start shadow-md animate-pulse">
                    AI is thinking...
                 </div>
             </div>
@@ -309,13 +309,13 @@ const ConversationSimulator: React.FC = () => {
       </div>
 
       {panelView && (
-            <div className="w-full bg-gray-50 dark:bg-slate-800/50 shadow-inner border-t border-gray-200 dark:border-slate-700 animate-slide-up">
+            <div className="w-full bg-slate-50 dark:bg-slate-800/50 shadow-inner border-t border-slate-200 dark:border-slate-800 animate-slide-up">
                 <div className="p-4 max-w-4xl mx-auto">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{getPanelTitle()}</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{getPanelTitle()}</h3>
                          <button 
                             onClick={() => setPanelView(null)} 
-                            className="select-none px-4 py-2 font-semibold text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 active:bg-gray-400 dark:active:bg-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+                            className="select-none px-4 py-2 font-semibold text-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 active:bg-slate-400 dark:active:bg-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
                         >
                              Done
                         </button>
@@ -325,7 +325,7 @@ const ConversationSimulator: React.FC = () => {
             </div>
          )}
 
-      <div className="flex-shrink-0 p-4 sm:p-5 bg-gray-100 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700">
+      <div className="flex-shrink-0 p-4 sm:p-5 bg-slate-100 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800">
         <div className="grid grid-cols-3 items-center gap-2 sm:gap-4">
             <div className="flex justify-center">
                 {showFeedbackControls ? (
@@ -342,7 +342,7 @@ const ConversationSimulator: React.FC = () => {
                     <button
                         onClick={handleGenerateIdea}
                         disabled={isAiTurn || isListening || isGeneratingIdea}
-                        className={`${sideButtonStyle} bg-green-500 text-white hover:bg-green-600 focus:ring-green-400`}
+                        className={`${sideButtonStyle} bg-teal-500 text-white hover:bg-teal-600 focus:ring-teal-400`}
                         aria-label="Generate an idea"
                     >
                         <LightbulbIcon className="w-5 h-5" />
@@ -355,7 +355,7 @@ const ConversationSimulator: React.FC = () => {
                 {isAiTurn ? (
                     <button
                         onClick={handleStopConversation}
-                        className="select-none flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-colors duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 bg-red-500 text-white focus:ring-red-300 hover:bg-red-600"
+                        className="select-none flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-colors duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 bg-rose-500 text-white focus:ring-rose-300 hover:bg-rose-600"
                         aria-label="Stop conversation"
                     >
                         <StopIcon className="w-8 h-8" />
@@ -365,8 +365,8 @@ const ConversationSimulator: React.FC = () => {
                         onClick={isListening ? stopListening : handleStartListening}
                         className={`select-none flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 ease-in-out shadow-lg focus:outline-none focus:ring-4 active:scale-95
                         ${isListening 
-                            ? 'bg-red-500 text-white focus:ring-red-300 animate-pulse' 
-                            : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300'
+                            ? 'bg-rose-500 text-white focus:ring-rose-300 animate-pulse' 
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-300'
                         }`}
                         aria-label={isListening ? 'Stop recording' : 'Start recording'}
                     >
@@ -379,7 +379,7 @@ const ConversationSimulator: React.FC = () => {
                 {showFeedbackControls && (
                     <button
                         onClick={() => setPanelView('feedback')}
-                        className={`${sideButtonStyle} bg-yellow-400 text-yellow-900 hover:bg-yellow-500 focus:ring-yellow-300`}
+                        className={`${sideButtonStyle} bg-amber-400 text-amber-900 hover:bg-amber-500 focus:ring-amber-300`}
                         aria-label="Show feedback for last response"
                     >
                         <SparklesIcon className="w-5 h-5" />
@@ -388,8 +388,8 @@ const ConversationSimulator: React.FC = () => {
                 )}
             </div>
         </div>
-         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3 h-5 flex items-center justify-center">
-            {error ? <span className="text-red-500 font-medium">{error}</span> :
+         <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-3 h-5 flex items-center justify-center">
+            {error ? <span className="text-rose-500 font-medium">{error}</span> :
              isListening ? 'Listening...' : 
              isProcessing ? 'Processing your response...' : 
              isSpeaking ? 'AI is speaking...' :

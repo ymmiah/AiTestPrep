@@ -10,8 +10,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.role === Role.USER;
 
   const bubbleClasses = isUser
-    ? 'bg-blue-500 text-white self-end rounded-br-none'
-    : 'bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-gray-100 self-start rounded-bl-none';
+    ? 'bg-indigo-600 text-white self-end rounded-br-none'
+    : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 self-start rounded-bl-none';
   
   const containerClasses = isUser ? 'justify-end' : 'justify-start';
 
@@ -19,7 +19,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     <div className={`flex w-full my-2 ${containerClasses}`}>
       <div className={`flex items-start gap-3 max-w-lg`}>
         {!isUser && (
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-sm">
             <SparklesIcon className="w-6 h-6" />
           </div>
         )}

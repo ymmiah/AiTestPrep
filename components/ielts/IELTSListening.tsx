@@ -63,7 +63,7 @@ const IELTSListening: React.FC = () => {
     
     if (exerciseState === 'loading') {
         return (
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto p-6 md:p-8 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                  <SkeletonLoader className="h-8 w-1/2 mx-auto mb-2" />
                  <SkeletonLoader className="h-5 w-3/4 mx-auto mb-8" />
                  <SkeletonLoader className="h-20 w-full mb-6" />
@@ -79,30 +79,30 @@ const IELTSListening: React.FC = () => {
     if (!exercise) return null;
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
+        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 animate-fade-in">
             <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                            <HeadphonesIcon className="w-8 h-8 text-blue-500" />
+                        <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                            <HeadphonesIcon className="w-8 h-8 text-indigo-500" />
                         </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">IELTS Listening Practice</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">
-                        Press play to start the audio. You can only listen once. Answer the questions as you listen. This exercise includes multiple choice and form completion questions.
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">IELTS Listening Practice</h2>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                        Press play to start the audio. You can only listen once. Answer the questions as you listen.
                     </p>
                 </div>
                 
                 {/* Mock Audio Player */}
-                <div className="mb-6 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700 flex items-center justify-center gap-4">
+                <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-4">
                     <button 
                         onClick={handlePlay} 
                         disabled={exerciseState !== 'ready'}
-                        className="p-3 rounded-full bg-blue-500 text-white disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-blue-600 active:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900"
+                        className="p-3 rounded-full bg-indigo-600 text-white disabled:bg-slate-400 disabled:cursor-not-allowed hover:bg-indigo-700 active:bg-indigo-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-900"
                     >
                         <SpeakerWaveIcon className="w-6 h-6" />
                     </button>
-                    <div className="text-gray-600 dark:text-gray-400 font-semibold">
+                    <div className="text-slate-600 dark:text-slate-400 font-semibold">
                         {exerciseState === 'playing' && 'Playing audio...'}
                         {exerciseState === 'finished' && 'Audio finished. Check your answers.'}
                         {exerciseState === 'results' && 'Exercise complete.'}
@@ -111,7 +111,7 @@ const IELTSListening: React.FC = () => {
                 </div>
 
                 {/* Questions Form */}
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-inner border border-slate-200 dark:border-slate-800">
                     <h3 className="text-xl font-bold text-center mb-6">{exercise.title}</h3>
                     <div className="space-y-6">
                         {exercise.questions.map((q, qIndex) => {
@@ -119,21 +119,21 @@ const IELTSListening: React.FC = () => {
                                 const mcq = q as IELTSListeningMCQ;
                                 return (
                                     <div key={mcq.questionNumber}>
-                                        <p className="font-medium text-gray-900 dark:text-gray-100">{mcq.questionNumber}. {mcq.questionText}</p>
+                                        <p className="font-medium text-slate-900 dark:text-slate-100">{mcq.questionNumber}. {mcq.questionText}</p>
                                         <div className="mt-3 space-y-2">
                                             {mcq.options.map((option, oIndex) => {
                                                 const isSelected = userAnswers[qIndex] === option;
                                                 const isCorrect = mcq.correctAnswer === option;
-                                                let optionClass = 'bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 border-gray-300 dark:border-slate-600';
+                                                let optionClass = 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 border-slate-300 dark:border-slate-600';
                                                 
                                                 if(exerciseState === 'results') {
                                                     if(isCorrect) {
-                                                        optionClass = 'bg-green-100 dark:bg-green-900/50 border-green-500';
+                                                        optionClass = 'bg-teal-100 dark:bg-teal-900/50 border-teal-500';
                                                     } else if (isSelected && !isCorrect) {
-                                                        optionClass = 'bg-red-100 dark:bg-red-900/50 border-red-500';
+                                                        optionClass = 'bg-rose-100 dark:bg-rose-900/50 border-rose-500';
                                                     }
                                                 } else if (isSelected) {
-                                                    optionClass = 'bg-blue-100 dark:bg-blue-900/50 border-blue-500';
+                                                    optionClass = 'bg-indigo-100 dark:bg-indigo-900/50 border-indigo-500';
                                                 }
                                                 
                                                 return (
@@ -155,9 +155,9 @@ const IELTSListening: React.FC = () => {
                                 const [before, after] = formQ.questionText.split('_____');
                                 const isCorrect = exerciseState === 'results' && userAnswers[qIndex].trim().toLowerCase() === formQ.correctAnswer.trim().toLowerCase();
                                 return (
-                                     <div key={formQ.questionNumber} className="flex flex-wrap items-center gap-2 bg-gray-100 dark:bg-slate-800 p-3 rounded-md">
+                                     <div key={formQ.questionNumber} className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
                                         <span className="font-semibold">{formQ.questionNumber}.</span>
-                                        <label htmlFor={`q-${formQ.questionNumber}`} className="text-gray-800 dark:text-gray-200">{before}</label>
+                                        <label htmlFor={`q-${formQ.questionNumber}`} className="text-slate-800 dark:text-slate-200">{before}</label>
                                         <input
                                             type="text"
                                             id={`q-${formQ.questionNumber}`}
@@ -166,13 +166,13 @@ const IELTSListening: React.FC = () => {
                                             disabled={exerciseState === 'results' || exerciseState === 'loading' || exerciseState === 'ready'}
                                             className={`w-40 px-2 py-1 rounded-md border-2 bg-white dark:bg-slate-700 transition-colors ${
                                                 exerciseState === 'results' 
-                                                    ? (isCorrect ? 'border-green-500' : 'border-red-500')
-                                                    : 'border-gray-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500'
+                                                    ? (isCorrect ? 'border-teal-500' : 'border-rose-500')
+                                                    : 'border-slate-300 dark:border-slate-600 focus:border-indigo-500 focus:ring-indigo-500'
                                             }`}
                                         />
-                                        <span className="text-gray-800 dark:text-gray-200">{after}</span>
+                                        <span className="text-slate-800 dark:text-slate-200">{after}</span>
                                         {exerciseState === 'results' && !isCorrect && (
-                                            <span className="text-sm font-bold text-green-600 dark:text-green-400">(Correct: {formQ.correctAnswer})</span>
+                                            <span className="text-sm font-bold text-teal-600 dark:text-teal-400">(Correct: {formQ.correctAnswer})</span>
                                         )}
                                     </div>
                                 );
@@ -184,7 +184,7 @@ const IELTSListening: React.FC = () => {
                 {/* Results and Actions */}
                 <div className="mt-8 text-center">
                     {exerciseState === 'results' ? (
-                        <div className="p-4 bg-green-100 dark:bg-green-900/50 rounded-lg text-green-800 dark:text-green-200 animate-fade-in">
+                        <div className="p-4 bg-teal-100 dark:bg-teal-900/50 rounded-lg text-teal-800 dark:text-teal-200 animate-fade-in">
                             <h3 className="text-xl font-bold flex items-center justify-center gap-2">
                                 <CheckCircleIcon className="w-6 h-6" />
                                 Results
@@ -192,7 +192,7 @@ const IELTSListening: React.FC = () => {
                             <p className="mt-1 text-2xl">You scored <span className="font-bold">{score}</span> out of <span className="font-bold">{exercise.questions.length}</span>.</p>
                              <button
                                 onClick={loadExercise}
-                                className="mt-4 select-none inline-flex items-center gap-2 px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                                className="mt-4 select-none inline-flex items-center gap-2 px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
                             >
                                 <SparklesIcon className="w-4 h-4" />
                                 Try a New Exercise
@@ -202,16 +202,16 @@ const IELTSListening: React.FC = () => {
                          <button
                             onClick={checkAnswers}
                             disabled={exerciseState !== 'finished'}
-                            className="select-none px-8 py-3 text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            className="select-none px-8 py-3 text-base font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:bg-slate-400 disabled:cursor-not-allowed"
                         >
                             Check Answers
                         </button>
                     )}
                 </div>
                  {exerciseState === 'results' && (
-                    <div className="mt-6 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-gray-200 dark:border-slate-700">
-                        <h4 className="font-bold text-gray-800 dark:text-white mb-2">Conversation Transcript</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{exercise.script}</p>
+                    <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+                        <h4 className="font-bold text-slate-800 dark:text-white mb-2">Conversation Transcript</h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{exercise.script}</p>
                     </div>
                  )}
             </div>

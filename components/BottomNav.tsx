@@ -16,8 +16,8 @@ const NavItem: React.FC<{
 }> = ({ viewName, label, icon, activeView, setActiveView }) => {
   const isActive = activeView === viewName;
   const buttonClass = `
-    flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs transition-colors duration-200 focus:outline-none select-none active:bg-gray-100 dark:active:bg-slate-800
-    ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-300'}
+    flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs transition-colors duration-200 focus:outline-none select-none active:bg-slate-100 dark:active:bg-slate-800
+    ${isActive ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-300'}
   `;
 
   return (
@@ -39,7 +39,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setActiveView }) => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 shadow-t-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800 shadow-t-lg">
       <div className="flex justify-around">
         {navItems.map(item => (
           <NavItem
