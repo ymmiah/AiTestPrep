@@ -1,3 +1,6 @@
+// FIX: Moved View type here from A2App.tsx to make it globally available and resolve import errors.
+export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topics' | 'profile' | 'leaderboard' | 'mockTest' | 'pronunciation';
+
 export enum Role {
   USER = 'user',
   MODEL = 'model',
@@ -19,6 +22,7 @@ export interface GeminiResponse {
   response: string;
   feedback: Feedback;
   pointsAwarded?: number;
+  rawJson?: string;
 }
 
 export interface StudyPlan {
@@ -117,6 +121,7 @@ export interface UserProfile {
     [scenario: string]: Message[];
   };
   vocabularyProgress?: { [word: string]: VocabularyItem };
+  isDeveloperMode?: boolean;
 }
 
 export interface LeaderboardEntry {

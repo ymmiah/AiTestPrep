@@ -1,6 +1,6 @@
 # AI Language Test Prep Platform
 
-![React](https://img.shields.io/badge/React-19-blue?logo=react)
+![React](https://img.shields.io/badge/React-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css)
 ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B7?logo=google&logoColor=white)
@@ -17,8 +17,7 @@ A comprehensive, AI-powered web application designed to help users prepare for m
   - [🎓 IELTS Exam Preparation](#-ielts-exam-preparation)
   - [ platform-wide-features Platform-Wide Features](#-platform-wide-features)
 - [🛠️ Technology Stack](#️-technology-stack)
-- [🚀 Getting Started](#-getting-started)
-- [🔑 API Key Configuration](#-api-key-configuration)
+- [🚀 Running the Project](#-running-the-project)
 - [☁️ Deployment](#️-deployment)
 - [🗺️ Roadmap & Future Enhancements](#️-roadmap--future-enhancements)
 
@@ -69,7 +68,7 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
 -   **Coming Soon:**
     -   Full Mock Test
 
-###  plataforma-wide-features Platform-Wide Features
+###  platform-wide-features Platform-Wide Features
 
 -   **Gamification & Motivation:**
     -   **Points System:** Earn points for completing exercises and giving high-quality answers.
@@ -87,7 +86,7 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
 
 | Category                  | Technology / Library                                       | Description                                                                                             |
 | ------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Frontend**              | React 19, TypeScript                                       | For a modern, type-safe, and component-based architecture.                                              |
+| **Frontend**              | React, TypeScript                                          | For a modern, type-safe, and component-based architecture.                                              |
 | **AI & Language**         | `@google/genai` (Google Gemini)                            | Powers all AI logic: conversations, feedback, assessments, image generation, and content creation.      |
 | **Speech APIs**           | Web Speech API (`SpeechRecognition`, `SpeechSynthesis`)    | Browser-native APIs for speech-to-text and text-to-speech functionality.                                |
 | **Styling**               | Tailwind CSS                                               | A utility-first CSS framework for rapid and responsive UI development.                                  |
@@ -97,82 +96,55 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Running the Project
 
 This project is a single-page application that runs entirely in the browser with no build step required.
 
-**Prerequisites:**
-*   A modern web browser that supports the Web Speech API (Google Chrome is recommended).
-*   A simple local web server to serve the `index.html` file.
+### 1. Get the Code
 
-**Steps:**
+Clone or download the repository to your local machine.
 
-1.  **Clone or Download the Code:**
-    ```bash
-    git clone [repository-url]
-    cd [repository-folder]
-    ```
+### 2. Provide the API Key
 
-2.  **Configure Your API Key:**
-    The application requires a Google Gemini API key to function. Please follow the detailed instructions in the [API Key Configuration](#-api-key-configuration) section below.
+The application requires a Google Gemini API key to function.
 
-3.  **Run a Local Server:**
-    Serve the project's root directory using any static file server.
-    
-    **Example using Python:**
-    ```bash
-    # If you have Python 3 installed
-    python -m http.server
-    ```
-    
-    **Example using Node.js (`serve` package):**
-    ```bash
-    # Install serve globally if you haven't already
-    npm install -g serve
-    # Run the server
-    serve
-    ```
-4.  **Open in Browser:**
-    Navigate to the local address provided by your server (e.g., `http://localhost:8000`).
+-   **Get Your Key:** Visit [**Google AI Studio**](https://aistudio.google.com/app/apikey) to create your free API key.
 
----
+The application is designed to be run in an environment where the API key is securely provided as an environment variable (`process.env.API_KEY`), such as the AI Studio Builder environment.
 
-## 🔑 API Key Configuration
+**For Local Development:**
+To simulate this environment locally, you can create a `config.js` file in the project's root directory:
 
-**IMPORTANT:** This application will not work without a Google Gemini API key.
+```javascript
+// config.js
+window.process = {
+  env: {
+    API_KEY: "YOUR_GEMINI_API_KEY_HERE",
+  }
+};
+```
 
-*   **Get Your Key:** Visit [**Google AI Studio**](https://aistudio.google.com/app/apikey) to create your free API key.
+Then, add a script tag to `index.html` inside the `<head>` tag, **before** the main script (`/index.tsx`):
 
-You can provide your key in two ways:
+```html
+<script src="/config.js"></script>
+```
 
-### Method 1: Via the Application UI (Recommended)
+> **Security Note:** Do **not** commit `config.js` to version control. Add it to your `.gitignore` file.
 
-This is the easiest method. The key is stored securely in your browser's local storage.
+### 3. Run a Local Server
 
-1.  Launch the application and select the **A2 Test Prep** module.
-2.  Navigate to the **My Profile** page from the sidebar or bottom navigation.
-3.  Scroll down to the **AI Model Configuration** section.
-4.  Paste your API key into the input field and click **Save & Reload**.
+Serve the project's root directory using any static file server.
 
-### Method 2: Local Development File (For Developers)
+**Example using Python:**
+```bash
+# If you have Python 3 installed
+python -m http.server
+```
 
-This method is useful for local development but will be **overridden** by any key set via the UI.
+### 4. Open in Browser
 
-1.  **Create `config.js`:** In the project's root directory (same folder as `index.html`), create a new file named `config.js`.
-2.  **Add Your Key:** Paste the following code into `config.js`, replacing `"YOUR_API_KEY_HERE"` with your actual key:
-    ```javascript
-    window.process = {
-      env: {
-        API_KEY: "YOUR_API_KEY_HERE",
-      }
-    };
-    ```
-3.  **Import in `index.html`:** Add the following line in `index.html` inside the `<head>` tag, **before** the main script (`/index.tsx`):
-    ```html
-    <script src="/config.js"></script>
-    ```
-
-> **Security Note:** Do **not** commit `config.js` to version control. If you are using Git, add `config.js` to your `.gitignore` file.
+Navigate to the local address provided by your server (e.g., `http://localhost:8000`).
 
 ---
 

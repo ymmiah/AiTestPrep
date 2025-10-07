@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getUserProfile } from '../services/geminiService';
 import { UserProfile } from '../types';
-import { View } from '../A2App';
+// FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
+import { View } from '../types';
 import SkeletonLoader from './SkeletonLoader';
 import { ChatBubbleIcon, SoundWaveIcon, CardStackIcon, HeadphonesIcon, SparklesIcon, ClipboardDocumentCheckIcon } from './IconComponents';
 

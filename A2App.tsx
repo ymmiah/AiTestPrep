@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ConversationSimulator from './components/ConversationSimulator';
-import ThemeSwitcher from './components/ThemeSwitcher';
 import StudyPlanCreator from './components/StudyPlanCreator';
 import TopicGenerator from './components/TopicGenerator';
 import VocabularyBuilder from './components/VocabularyBuilder';
@@ -14,43 +13,33 @@ import Leaderboard from './components/Leaderboard';
 import MockTest from './components/MockTest';
 import NotificationContainer from './components/NotificationContainer';
 import { NotificationContext } from './contexts/NotificationContext';
-import { Notification, NotificationAction } from './types';
+// FIX: Moved View type to types.ts and import it here.
+import { Notification, NotificationAction, View } from './types';
 import PronunciationPractice from './components/PronunciationPractice';
-import { ArrowLeftIcon } from './components/IconComponents';
+import ModuleLayout from './components/ModuleLayout';
+import { getUserProfile } from './services/geminiService';
 
-export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topics' | 'profile' | 'leaderboard' | 'mockTest' | 'pronunciation';
+// FIX: Moved View type to types.ts to be shared across components.
 
 interface A2AppProps {
   onGoBack: () => void;
+  theme: string;
+  toggleTheme: () => void;
+  initialView?: View;
 }
 
-const A2App: React.FC<A2AppProps> = ({ onGoBack }) => {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const storedTheme = window.localStorage.getItem('theme');
-      if (storedTheme) return storedTheme;
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      return prefersDark ? 'dark' : 'light';
-    }
-    return 'light';
-  });
-  
-  const [activeView, setActiveView] = useState<View>('dashboard');
+const A2App: React.FC<A2AppProps> = ({ onGoBack, theme, toggleTheme, initialView }) => {
+  const [activeView, setActiveView] = useState<View>(initialView || 'dashboard');
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isDeveloperMode, setIsDeveloperMode] = useState(false);
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    const isDark = theme === 'dark';
-
-    root.classList.remove(isDark ? 'light' : 'dark');
-    root.classList.add(theme);
-
-    window.localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+      const fetchDevMode = async () => {
+          const profile = await getUserProfile();
+          setIsDeveloperMode(profile.isDeveloperMode || false);
+      };
+      fetchDevMode();
+  }, [activeView]); // Re-check when view changes, e.g., after visiting profile
 
   const addNotification = useCallback((
     notification: Omit<Notification, 'id' | 'action'> & { action?: Omit<NotificationAction, 'onClick'> }
@@ -90,7 +79,7 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack }) => {
       case 'pronunciation':
         return <PronunciationPractice />;
        case 'mockTest':
-        return <MockTest />;
+        return <MockTest setActiveView={setActiveView} />;
       case 'planner':
         return <StudyPlanCreator />;
       case 'topics':
@@ -125,32 +114,24 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack }) => {
         <div className="flex h-full">
           <Sidebar activeView={activeView} setActiveView={setActiveView} />
           
-          <div className="flex-1 flex flex-col h-full">
-            <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-200/80 dark:border-slate-800/80 md:py-6 md:px-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={onGoBack} 
-                  className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 active:bg-slate-300 dark:active:bg-slate-700 transition-colors"
-                  aria-label="Back to main menu"
-                >
-                    <ArrowLeftIcon className="w-6 h-6" />
-                </button>
-                <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {viewTitles[activeView]}
-                </h1>
-              </div>
-              <div className="flex items-center">
-                <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
-              </div>
-            </header>
-            <main className="flex-1 overflow-y-auto">
-              <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto">
-                 {renderView()}
-              </div>
-            </main>
-          </div>
+          <ModuleLayout
+            title={viewTitles[activeView]}
+            onGoBack={onGoBack}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          >
+            <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto w-full">
+              {renderView()}
+            </div>
+          </ModuleLayout>
           
           <BottomNav activeView={activeView} setActiveView={setActiveView} />
+
+          {isDeveloperMode && (
+            <div className="fixed bottom-20 md:bottom-2 left-2 bg-black/70 text-white text-xs font-mono px-2 py-1 rounded z-50 pointer-events-none">
+                [DEV: {activeView}]
+            </div>
+          )}
         </div>
       </div>
     </NotificationContext.Provider>

@@ -1,11 +1,13 @@
 import React from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
-import { AcademicCapIcon, SparklesIcon, UserGroupIcon } from './IconComponents';
+import { AcademicCapIcon, SparklesIcon, UserGroupIcon, UserCircleIcon } from './IconComponents';
+// FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
+import { View } from '../types';
 
 type Module = 'landing' | 'a2' | 'ielts';
 
 interface LandingPageProps {
-    onSelectModule: (module: Module) => void;
+    onSelectModule: (module: Module, initialView?: View) => void;
     theme: string;
     toggleTheme: () => void;
 }
@@ -41,7 +43,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectModule, theme, toggle
                     <SparklesIcon className="w-7 h-7" />
                     <span>AI Test Prep</span>
                 </div>
-                <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onSelectModule('a2', 'profile')}
+                        className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-900 transition-all duration-200 active:scale-90"
+                        aria-label="Go to Profile"
+                    >
+                        <UserCircleIcon className="w-6 h-6" />
+                    </button>
+                    <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
+                </div>
             </header>
             
             <main className="flex-1 overflow-y-auto">

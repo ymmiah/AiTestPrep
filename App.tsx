@@ -1,9 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
+// FIX: The 'View' type is now imported from 'types.ts' to avoid circular dependencies.
 import A2App from './A2App';
+import { View } from './types';
 import LandingPage from './components/LandingPage';
 import IELTSPrep from './components/IELTSPrep';
 
 type Module = 'landing' | 'a2' | 'ielts';
+interface AppState {
+    module: Module;
+    initialView?: View;
+}
 
 const App: React.FC = () => {
     const [theme, setTheme] = useState(() => {
@@ -16,7 +23,7 @@ const App: React.FC = () => {
         return 'light';
     });
     
-    const [currentModule, setCurrentModule] = useState<Module>('landing');
+    const [currentModule, setCurrentModule] = useState<AppState>({ module: 'landing' });
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -31,16 +38,25 @@ const App: React.FC = () => {
     const toggleTheme = () => {
         setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
+    
+    const handleSelectModule = (module: Module, initialView?: View) => {
+        setCurrentModule({ module, initialView });
+    };
 
     const renderModule = () => {
-        switch(currentModule) {
+        switch(currentModule.module) {
             case 'a2':
-                return <A2App onGoBack={() => setCurrentModule('landing')} />;
+                return <A2App 
+                            onGoBack={() => setCurrentModule({ module: 'landing' })} 
+                            theme={theme} 
+                            toggleTheme={toggleTheme} 
+                            initialView={currentModule.initialView} 
+                        />;
             case 'ielts':
-                return <IELTSPrep onGoBack={() => setCurrentModule('landing')} theme={theme} toggleTheme={toggleTheme} />;
+                return <IELTSPrep onGoBack={() => setCurrentModule({ module: 'landing' })} theme={theme} toggleTheme={toggleTheme} />;
             case 'landing':
             default:
-                return <LandingPage onSelectModule={setCurrentModule} theme={theme} toggleTheme={toggleTheme} />;
+                return <LandingPage onSelectModule={handleSelectModule} theme={theme} toggleTheme={toggleTheme} />;
         }
     };
 

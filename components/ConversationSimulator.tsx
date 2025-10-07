@@ -33,6 +33,8 @@ const ConversationSimulator: React.FC = () => {
   const [improvedAnswer, setImprovedAnswer] = useState<string | null>(null);
   const [isGeneratingImprovement, setIsGeneratingImprovement] = useState(false);
   const [hasHistory, setHasHistory] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(false);
+  const [rawResponseJson, setRawResponseJson] = useState<string | null>(null);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isCancelledRef = useRef(false);
@@ -42,18 +44,20 @@ const ConversationSimulator: React.FC = () => {
   const { isListening, startListening, stopListening, hasRecognitionSupport, error } = useSpeechRecognition(handleTranscript);
 
   useEffect(() => {
-    const checkHistory = async () => {
+    const checkHistoryAndSettings = async () => {
         stopListening();
         cancelSpeech();
         setMessages([{ role: Role.MODEL, text: scenarioPrompts[scenario] }]);
         setFeedback(null);
         setPanelView(null);
+        setRawResponseJson(null);
 
         const profile = await getUserProfile();
         const history = profile.conversationHistory?.[scenario];
         setHasHistory(!!history && history.length > 0);
+        setIsDevMode(profile.isDeveloperMode || false);
     };
-    checkHistory();
+    checkHistoryAndSettings();
   }, [scenario]);
 
   async function handleTranscript(transcript: string) {
@@ -65,6 +69,7 @@ const ConversationSimulator: React.FC = () => {
     setMessages(messagesWithUser);
     setIsProcessing(true);
     setFeedback(null);
+    setRawResponseJson(null);
     if (panelView === 'idea' || panelView === 'improvement') {
         setPanelView(null);
     }
@@ -73,7 +78,12 @@ const ConversationSimulator: React.FC = () => {
     
     if (isCancelledRef.current) return;
     
-    const { response, feedback: newFeedback, pointsAwarded }: GeminiResponse = geminiData;
+    const { response, feedback: newFeedback, pointsAwarded, rawJson }: GeminiResponse = geminiData;
+
+    if (rawJson) {
+      setRawResponseJson(rawJson);
+    }
+
 
     // Save points and update progress stats to the user's profile
     if (pointsAwarded) {
@@ -106,7 +116,7 @@ const ConversationSimulator: React.FC = () => {
     setIsProcessing(false);
     speak(response);
 
-    if (pointsAwarded) {
+    if (pointsAwarded && transcript !== '[DEV_SKIP]') {
         addNotification({
             type: 'success',
             title: 'Points Earned!',
@@ -308,6 +318,19 @@ const ConversationSimulator: React.FC = () => {
         )}
       </div>
 
+      {isDevMode && rawResponseJson && (
+        <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <details>
+                <summary className="font-semibold text-sm cursor-pointer text-slate-600 dark:text-slate-400">
+                    Developer Info: Raw API Response
+                </summary>
+                <pre className="mt-2 p-3 bg-slate-200 dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 rounded-md overflow-x-auto">
+                    <code>{JSON.stringify(JSON.parse(rawResponseJson), null, 2)}</code>
+                </pre>
+            </details>
+        </div>
+       )}
+
       {panelView && (
             <div className="w-full bg-slate-50 dark:bg-slate-800/50 shadow-inner border-t border-slate-200 dark:border-slate-800 animate-slide-up">
                 <div className="p-4 max-w-4xl mx-auto">
@@ -351,7 +374,7 @@ const ConversationSimulator: React.FC = () => {
                 )}
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center items-center gap-4">
                 {isAiTurn ? (
                     <button
                         onClick={handleStopConversation}
@@ -371,6 +394,15 @@ const ConversationSimulator: React.FC = () => {
                         aria-label={isListening ? 'Stop recording' : 'Start recording'}
                     >
                         <MicrophoneIcon className="w-8 h-8" />
+                    </button>
+                )}
+                 {isDevMode && !isAiTurn && !isListening && (
+                    <button
+                        onClick={() => handleTranscript('[DEV_SKIP]')}
+                        className="select-none px-4 py-2 rounded-full font-bold bg-slate-500 text-white hover:bg-slate-600 active:bg-slate-700 shadow-lg text-sm"
+                        aria-label="Developer Skip"
+                    >
+                        Skip
                     </button>
                 )}
             </div>

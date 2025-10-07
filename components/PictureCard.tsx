@@ -14,7 +14,7 @@ const PictureCard: React.FC<PictureCardProps> = ({ imageUrl = null, isLoading = 
   return (
     <div className="p-4 bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700 animate-fade-in">
       <div className="max-w-md mx-auto">
-        <div className="aspect-video w-full rounded-lg shadow-md overflow-hidden bg-gray-200 dark:bg-slate-700 flex items-center justify-center">
+        <div className="aspect-[4/3] w-full rounded-lg shadow-md overflow-hidden bg-gray-200 dark:bg-slate-700 flex items-center justify-center">
             {isLoading ? <SkeletonLoader className="w-full h-full" /> : (
                 <img 
                   src={displayUrl} 

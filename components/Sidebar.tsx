@@ -1,5 +1,6 @@
 import React from 'react';
-import { View } from '../A2App';
+// FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
+import { View } from '../types';
 import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, AcademicCapIcon, CalendarDaysIcon, QuestionMarkCircleIcon, SparklesIcon, UserCircleIcon, TrophyIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
 
 interface SidebarProps {

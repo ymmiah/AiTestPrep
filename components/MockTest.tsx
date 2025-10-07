@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Message, Role, FinalAssessment, TranscriptAnalysis } from '../types';
-import { startMockTestSession, generateFinalAssessment, updateUserProfile, endMockTestSession, generateTestImage, generateTranscriptAnalysis } from '../services/geminiService';
+import { Message, Role, FinalAssessment, TranscriptAnalysis, View } from '../types';
+import { startMockTestSession, generateFinalAssessment, updateUserProfile, endMockTestSession, generateTestImage, generateTranscriptAnalysis, getUserProfile } from '../services/geminiService';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useNotification } from '../contexts/NotificationContext';
@@ -13,9 +13,13 @@ import SkeletonLoader from './SkeletonLoader';
 
 const TEST_DURATION_SECONDS = 420; // 7 minutes
 type TestPart = 'intro' | 'picture' | 'topic1' | 'topic2';
-type TestStep = 'idle' | 'running' | 'review' | 'finished';
+type TestStep = 'idle' | 'running' | 'results';
 
-const MockTest: React.FC = () => {
+interface MockTestProps {
+  setActiveView: (view: View) => void;
+}
+
+const MockTest: React.FC<MockTestProps> = ({ setActiveView }) => {
     const [testStep, setTestStep] = useState<TestStep>('idle');
     const [testPart, setTestPart] = useState<TestPart>('intro');
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -25,8 +29,8 @@ const MockTest: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [finalAssessment, setFinalAssessment] = useState<FinalAssessment | null>(null);
     const [transcriptAnalysis, setTranscriptAnalysis] = useState<TranscriptAnalysis | null>(null);
-    const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
-    const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+    const [isLoadingResults, setIsLoadingResults] = useState(false);
+    const [isDevMode, setIsDevMode] = useState(false);
 
 
     const chatSessionRef = useRef<Chat | null>(null);
@@ -37,6 +41,12 @@ const MockTest: React.FC = () => {
     const { isListening, startListening, stopListening, hasRecognitionSupport, error } = useSpeechRecognition(handleTranscript);
 
     useEffect(() => {
+        const fetchDevMode = async () => {
+            const profile = await getUserProfile();
+            setIsDevMode(profile.isDeveloperMode || false);
+        };
+        fetchDevMode();
+        
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
             cancelSpeech();
@@ -55,22 +65,48 @@ const MockTest: React.FC = () => {
         stopListening();
         cancelSpeech();
 
-        setTestStep('review');
-        setIsLoadingAnalysis(true);
+        setTestStep('results');
+        setIsLoadingResults(true);
         setTranscriptAnalysis(null);
+        setFinalAssessment(null);
 
         try {
-            const analysis = await generateTranscriptAnalysis(messages, imageUrl);
+            const [analysis, assessment] = await Promise.all([
+                generateTranscriptAnalysis(messages, imageUrl),
+                generateFinalAssessment(messages)
+            ]);
+            
             setTranscriptAnalysis(analysis);
+            setFinalAssessment(assessment);
+
+            const points = Math.round((assessment?.overallScore || 0) * 1.5);
+            if (points > 0) {
+                await updateUserProfile(profile => ({
+                    ...profile,
+                    points: profile.points + points,
+                }));
+                
+                addNotification({
+                    type: 'success',
+                    title: 'Test Complete!',
+                    message: `You earned ${points} points. Your results are ready.`,
+                });
+            } else {
+                 addNotification({
+                    type: 'info',
+                    title: 'Test Complete!',
+                    message: `Your results are ready to view.`,
+                });
+            }
         } catch (error) {
-            console.error("Failed to get transcript analysis:", error);
+            console.error("Failed to get test results:", error);
             addNotification({
                 type: 'info',
-                title: 'Analysis Error',
-                message: 'Could not generate the detailed analysis for your test.',
+                title: 'Results Error',
+                message: 'Could not generate the full results for your test.',
             });
         } finally {
-            setIsLoadingAnalysis(false);
+            setIsLoadingResults(false);
         }
 
         endMockTestSession();
@@ -128,12 +164,12 @@ const MockTest: React.FC = () => {
             const result = await chatSessionRef.current.sendMessage({ message: transcript });
             const modelText = result.text.trim();
             
-            // Part transition logic: Order is important to check for the most specific phrases first.
-            if (modelText.startsWith("Okay, thank you. Now, let's talk about")) {
-                setTestPart('topic1');
-            } else if (modelText.startsWith("Thank you. Now let's talk about")) {
+            // Part transition logic based on the strict transition phrases from the system prompt.
+            if (modelText.includes("ask you for some directions")) {
                 setTestPart('topic2');
-            } else if (modelText.includes("we are going to look at a picture.")) {
+            } else if (modelText.includes("Now, let's talk about")) {
+                setTestPart('topic1');
+            } else if (modelText.includes("we are going to look at a picture")) {
                 setTestPart('picture');
             }
 
@@ -158,44 +194,13 @@ const MockTest: React.FC = () => {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
     
-    const handleGetFinalAssessment = async () => {
-        setTestStep('finished');
-        setIsLoadingAssessment(true);
-        setFinalAssessment(null);
+    const handleRetakeTest = () => {
+        setImageUrl(null);
+        setTestStep('idle');
+    };
 
-        try {
-            const assessment = await generateFinalAssessment(messages);
-            setFinalAssessment(assessment);
-
-            const points = Math.round((assessment?.overallScore || 0) * 1.5);
-            if (points > 0) {
-                await updateUserProfile(profile => ({
-                    ...profile,
-                    points: profile.points + points,
-                }));
-                
-                addNotification({
-                    type: 'success',
-                    title: 'Assessment Ready!',
-                    message: `You earned ${points} points for completing the exam.`,
-                });
-            } else {
-                 addNotification({
-                    type: 'info',
-                    title: 'Assessment Ready!',
-                    message: `View your final assessment below.`,
-                });
-            }
-        } catch (error) {
-            console.error("Failed to generate final assessment:", error);
-            addNotification({
-                type: 'info',
-                title: 'Assessment Error',
-                message: 'Could not generate your final score.',
-            });
-        } finally {
-            setIsLoadingAssessment(false);
-        }
+    const handleBackToDashboard = () => {
+        setActiveView('dashboard');
     };
 
     const isAiTurn = isProcessing || isSpeaking;
@@ -204,7 +209,7 @@ const MockTest: React.FC = () => {
         intro: 'Part 1: Introduction',
         picture: 'Part 2: Picture Description',
         topic1: 'Part 3: Topic Discussion',
-        topic2: 'Part 4: Topic Discussion',
+        topic2: 'Part 4: Directions Task',
     };
 
     const renderIdleView = () => (
@@ -220,77 +225,6 @@ const MockTest: React.FC = () => {
             >
                 Start Test
             </button>
-        </div>
-    );
-    
-    const renderReviewView = () => (
-        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
-            <div className="w-full max-w-3xl mx-auto">
-                <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Review Your Test</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Here's a detailed breakdown of your performance. When you're ready, get your final score.</p>
-                </div>
-                
-                <TranscriptReview messages={messages} analysis={transcriptAnalysis} imageUrl={imageUrl} isLoading={isLoadingAnalysis} />
-
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button onClick={() => { setImageUrl(null); setTestStep('idle'); }} className="select-none w-full px-6 py-3 border border-gray-300 dark:border-slate-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 active:bg-gray-100 dark:active:bg-slate-500">
-                        Take Another Test
-                    </button>
-                    {finalAssessment ? (
-                        <button onClick={() => setTestStep('finished')} className="select-none w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800">
-                           View Final Score
-                        </button>
-                    ) : (
-                        <button onClick={handleGetFinalAssessment} className="select-none w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800">
-                           Get Final Assessment
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderFinishedView = () => (
-        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg animate-fade-in">
-            <div className="w-full max-w-3xl mx-auto">
-                 <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Test Complete!</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Here is your final assessment.</p>
-                </div>
-                {isLoadingAssessment ? (
-                    <div className="text-center">
-                        <SkeletonLoader className="h-8 w-1/2 mx-auto mb-4" />
-                        <SkeletonLoader className="h-48 w-full" />
-                    </div>
-                ) : finalAssessment && (
-                    <div className="space-y-6">
-                        <div className="text-center p-6 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
-                            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Overall Score</p>
-                            <p className="text-5xl font-bold text-blue-600 dark:text-blue-300">{finalAssessment.overallScore}<span className="text-2xl">/100</span></p>
-                        </div>
-
-                        <div className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700">
-                             <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Strengths</h4>
-                             <p className="text-gray-700 dark:text-gray-300">{finalAssessment.strengths}</p>
-                        </div>
-
-                         <div className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-lg border border-gray-200 dark:border-slate-700">
-                             <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Areas for Improvement</h4>
-                             <p className="text-gray-700 dark:text-gray-300">{finalAssessment.areasForImprovement}</p>
-                        </div>
-                        
-                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button onClick={() => { setImageUrl(null); setTestStep('idle'); }} className="select-none w-full px-6 py-3 border border-gray-300 dark:border-slate-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 active:bg-gray-100 dark:active:bg-slate-500">
-                                Take Another Test
-                            </button>
-                             <button onClick={() => setTestStep('review')} className="select-none w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800">
-                                Review Transcript
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
         </div>
     );
 
@@ -319,7 +253,7 @@ const MockTest: React.FC = () => {
             </div>
 
             <div className="flex-shrink-0 p-4 sm:p-5 bg-gray-100 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700">
-                <div className="flex justify-center items-center">
+                <div className="flex justify-center items-center gap-4">
                     {isAiTurn ? (
                         <button
                             disabled
@@ -341,6 +275,15 @@ const MockTest: React.FC = () => {
                             <MicrophoneIcon className="w-8 h-8" />
                         </button>
                     )}
+                    {isDevMode && !isAiTurn && !isListening && (
+                        <button
+                            onClick={() => handleTranscript('[DEV_SKIP]')}
+                            className="select-none px-4 py-2 rounded-full font-bold bg-slate-500 text-white hover:bg-slate-600 active:bg-slate-700 shadow-lg text-sm"
+                            aria-label="Developer Skip"
+                        >
+                            Skip
+                        </button>
+                    )}
                 </div>
                 <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3 h-5 flex items-center justify-center">
                     {error ? <span className="text-red-500 font-medium">{error}</span> :
@@ -358,10 +301,16 @@ const MockTest: React.FC = () => {
             return renderIdleView();
         case 'running':
             return renderRunningView();
-        case 'review':
-            return renderReviewView();
-        case 'finished':
-            return renderFinishedView();
+        case 'results':
+            return <TranscriptReview
+                messages={messages}
+                analysis={transcriptAnalysis}
+                assessment={finalAssessment}
+                imageUrl={imageUrl}
+                isLoading={isLoadingResults}
+                onRetake={handleRetakeTest}
+                onBackToDashboard={handleBackToDashboard}
+            />;
         default:
             return renderIdleView();
     }

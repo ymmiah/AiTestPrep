@@ -80,6 +80,7 @@ const getDefaultProfile = (): UserProfile => ({
   },
   conversationHistory: {},
   vocabularyProgress: {},
+  isDeveloperMode: false,
 });
 
 export const getUserProfile = async (): Promise<UserProfile> => {
@@ -347,6 +348,7 @@ export const getGeminiResponse = async (
             pronunciation: parsedResponse.feedback?.pronunciation || "Good pronunciation."
         },
         pointsAwarded: parsedResponse.pointsAwarded && typeof parsedResponse.pointsAwarded === 'number' ? parsedResponse.pointsAwarded : 10,
+        rawJson: jsonString,
     };
 
     return sanitizedResponse;
@@ -536,7 +538,7 @@ export const generateTestImage = async (): Promise<string> => {
             config: {
               numberOfImages: 1,
               outputMimeType: 'image/jpeg',
-              aspectRatio: '16:9',
+              aspectRatio: '4:3',
             },
         });
 
@@ -559,36 +561,52 @@ export const generateTestImage = async (): Promise<string> => {
 let mockTestChat: Chat | null = null;
 
 const getMockTestSystemInstruction = (): string => {
-    const conversationAreas = [
-        "Your daily routine", "Your favourite food", "Festivals in your country", "Public transport", "Watching films or TV", 
-        "Your favourite music", "A recent personal experience", "Shopping for clothes", "Holidays and travel", 
-        "The weather", "Your hometown or city", "Your job or studies", "Your friends", "Weekends"
+    const conversationTopics = [
+        "your daily routine", "your favourite food", "festivals in your country", "public transport", "watching films or TV", 
+        "your favourite music", "a recent personal experience", "shopping for clothes", "holidays and travel", 
+        "the weather", "your hometown or city", "your job or studies", "your friends", "weekends"
     ];
-    // Choose two distinct topics for the conversation phase.
-    const chosenAreas = conversationAreas.sort(() => 0.5 - Math.random()).slice(0, 2);
+    // Choose one topic for the conversation phase.
+    const chosenTopic = conversationTopics[Math.floor(Math.random() * conversationTopics.length)];
 
-    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm, giving the user time to think without rushing them. You will conduct a complete, structured, multi-part mock test. Do NOT provide any feedback during the test. Only respond conversationally as an examiner would. Adhere strictly to the following 4-part structure. IMPORTANT: You must wait for the user to respond after you announce a transition to a new part before you ask the first question of that new part.
+    const directionDestinations = ["the post office", "the train station", "the library", "the nearest supermarket", "the city museum"];
+    const chosenDestination = directionDestinations[Math.floor(Math.random() * directionDestinations.length)];
+
+
+    // FIX: Overhauled the system prompt to be more explicit and sequential, preventing the AI from skipping user turns or asking multiple questions at once.
+    return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm. You will conduct a complete, structured, multi-part mock test.
+CRITICAL INSTRUCTIONS:
+- You MUST ask questions ONE AT A TIME and always wait for the user to respond before continuing.
+- Do NOT provide any feedback during the test. Only respond as an examiner.
+- When transitioning between parts, you MUST use the exact transition phrases provided and nothing else.
+- You MUST wait for the user to acknowledge a transition (e.g., they say "okay") before asking the first question of the new part.
+
+Follow this 4-part structure STRICTLY:
 
 Part 1: Introduction.
-- Start with EXACTLY: "Hello. My name is Alex. Can you please tell me your full name?".
-- After the user responds, ask "And where are you from?".
-- After that, ask two more simple introductory questions to get to know them. These questions should naturally follow from their previous answers. For example, you could ask about their home, family, work, or studies, but be flexible and adapt to what they say.
-- To transition to Part 2, you MUST end your response with ONLY: "Thank you. Now, in the next part, we are going to look at a picture."
+1.  Start with EXACTLY: "Hello. My name is Alex. Can you please tell me your full name?". Wait for the user's response.
+2.  Next, ask "And where are you from?". Wait for the user's response.
+3.  Next, ask ONE more simple introductory question (e.g., "What is the weather like in your city?" or "Do you work or are you a student?"). Wait for the user's response.
+4.  After the user answers the third question, your NEXT response must ONLY be the transition phrase: "Thank you. Now, in the next part, we are going to look at a picture."
 
 Part 2: Picture Description.
-- After the user acknowledges the transition (e.g., they say "okay"), your next response MUST be to ask them to describe the picture. For example: "Please describe what you see in the picture."
-- Listen to their description, then ask at least two relevant follow-up questions about the picture to encourage more detail (e.g., "What are the people doing?", "What is the weather like?").
-- To transition to Part 3, you MUST end your response with ONLY: "Okay, thank you. Now, let's talk about ${chosenAreas[0]}."
+1.  After the user acknowledges the transition, your next response MUST be to ask them to describe the picture, for example: "Please describe what you see in the picture." Wait for their main description.
+2.  After their main description, you will ask exactly three follow-up questions. Ask them ONE BY ONE.
+3.  First Question: Ask ONE relevant follow-up question about the picture. Wait for their response.
+4.  Second Question: After they answer, ask a SECOND, DIFFERENT follow-up question. Wait for their response.
+5.  Third Question: After they answer, ask a THIRD and final imaginative question about the picture. Wait for their response.
+6.  After their response to the third question, your NEXT response must ONLY be the transition phrase: "Okay, thank you. Now, let's talk about ${chosenTopic}."
 
-Part 3: Topic Discussion 1.
-- After the user acknowledges the transition, you will begin the conversation on the first subject area: '${chosenAreas[0]}'. Ask your first question on this topic.
-- Ask at least three follow-up questions to develop a short conversation on this topic.
-- To transition to Part 4, you MUST end your response with ONLY: "Thank you. Now let's talk about ${chosenAreas[1]}."
+Part 3: Topic Discussion.
+1.  After the user acknowledges the transition, begin the conversation on '${chosenTopic}'. Ask your first question on this topic. Wait for their response.
+2.  After they answer, ask a second follow-up question on the topic. Wait for their response.
+3.  After they answer, ask a third and final follow-up question on the topic. Wait for their response.
+4.  After their final response in this part, your NEXT response must ONLY be the transition phrase: "Thank you. For the final part of the test, I'm going to ask you for some directions."
 
-Part 4: Topic Discussion 2.
-- After the user acknowledges the transition, you will begin the conversation on the second subject area: '${chosenAreas[1]}'. Ask your first question on this topic.
-- Ask at least three follow-up questions to develop the conversation.
-- After their final answer in this part, you MUST end the test by saying ONLY: "That is the end of the test. Thank you." Do not add any other words or pleasantries.`;
+Part 4: Directions Task.
+1.  After the user acknowledges the transition, you MUST say: "Imagine we are standing outside the town hall. I need to go to ${chosenDestination}. Can you tell me how to get there?". Wait for their response.
+2.  After the user gives directions, ask ONE simple clarifying question (e.g., "Is it far from here?" or "What will I see when I am near there?"). Wait for their response.
+3.  After their final answer, your NEXT response MUST ONLY be the end-of-test phrase: "That is the end of the test. Thank you." Do not add any other words.`;
 };
 
 

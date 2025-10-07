@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Badge, ApiConfig, AiProvider } from '../types';
-import { getUserProfile, updateUserName, getApiConfig, saveApiConfig } from '../services/geminiService';
+// FIX: Import 'updateUserName' from geminiService to fix an undefined function error when saving the user's name.
+import { getUserProfile, updateUserProfile, getApiConfig, saveApiConfig, updateUserName } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
 import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, KeyIcon, EyeIcon, EyeSlashIcon } from './IconComponents';
 
@@ -49,6 +50,7 @@ const Profile: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState<AiProvider>('gemini');
     const [apiKeyInput, setApiKeyInput] = useState('');
     const [isKeyVisible, setIsKeyVisible] = useState(false);
+    const [isDevMode, setIsDevMode] = useState(false);
 
     const fetchProfileData = async () => {
         setIsLoading(true);
@@ -59,6 +61,7 @@ const Profile: React.FC = () => {
         if (!profileData.name) {
             setIsEditingName(true);
         }
+        setIsDevMode(profileData.isDeveloperMode || false);
 
         setApiConfig(configData);
         setSelectedProvider(configData.provider);
@@ -104,6 +107,14 @@ const Profile: React.FC = () => {
             }
         };
         saveApiConfig(newConfig); // This will save and reload the page
+    };
+
+    const handleDevModeToggle = async (enabled: boolean) => {
+        setIsDevMode(enabled);
+        await updateUserProfile(p => ({
+            ...p,
+            isDeveloperMode: enabled,
+        }));
     };
 
 
@@ -276,6 +287,34 @@ const Profile: React.FC = () => {
                             Your key is stored securely in your browser's local storage.
                         </p>
                     </div>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">
+                    Developer Settings
+                </h3>
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                    <div>
+                        <p className="font-medium text-slate-800 dark:text-slate-100">Enable Developer Mode</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Show raw API responses in the app.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleDevModeToggle(!isDevMode)}
+                        className={`${
+                            isDevMode ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+                        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900`}
+                        role="switch"
+                        aria-checked={isDevMode}
+                    >
+                        <span
+                            aria-hidden="true"
+                            className={`${
+                                isDevMode ? 'translate-x-5' : 'translate-x-0'
+                            } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                        />
+                    </button>
                 </div>
             </div>
         </div>
