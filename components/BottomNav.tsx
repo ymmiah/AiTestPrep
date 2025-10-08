@@ -1,7 +1,8 @@
 import React from 'react';
 // FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
 import { View } from '../types';
-import { HomeIcon, ChatBubbleIcon, CardStackIcon, UserCircleIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
+// FIX: Replaced SoundWaveIcon with QuestionMarkCircleIcon to add the "Topic Practice" link.
+import { HomeIcon, ChatBubbleIcon, CardStackIcon, UserCircleIcon, ClipboardDocumentCheckIcon, QuestionMarkCircleIcon } from './IconComponents';
 
 interface BottomNavProps {
   activeView: View;
@@ -30,11 +31,12 @@ const NavItem: React.FC<{
 };
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeView, setActiveView }) => {
+  // FIX: Replaced "Pronounce" with "Topics" to make the Topic Practice module accessible from the main mobile navigation.
   const navItems = [
     { view: 'dashboard', label: 'Home', icon: <HomeIcon className="w-6 h-6" /> },
     { view: 'simulator', label: 'Speak', icon: <ChatBubbleIcon className="w-6 h-6" /> },
     { view: 'mockTest', label: 'Test', icon: <ClipboardDocumentCheckIcon className="w-6 h-6" /> },
-    { view: 'pronunciation', label: 'Pronounce', icon: <SoundWaveIcon className="w-6 h-6" /> },
+    { view: 'topicPractice', label: 'Topics', icon: <QuestionMarkCircleIcon className="w-6 h-6" /> },
     { view: 'vocabulary', label: 'Words', icon: <CardStackIcon className="w-6 h-6" /> },
     { view: 'profile', label: 'Profile', icon: <UserCircleIcon className="w-6 h-6" /> },
   ];

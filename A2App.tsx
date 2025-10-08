@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ConversationSimulator from './components/ConversationSimulator';
 import StudyPlanCreator from './components/StudyPlanCreator';
-import TopicGenerator from './components/TopicGenerator';
+import TopicPractice from './components/TopicPractice';
 import VocabularyBuilder from './components/VocabularyBuilder';
 import ListeningPractice from './components/ListeningPractice';
 import Dashboard from './components/Dashboard';
@@ -82,8 +82,8 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack, theme, toggleTheme, initialView
         return <MockTest setActiveView={setActiveView} />;
       case 'planner':
         return <StudyPlanCreator />;
-      case 'topics':
-        return <TopicGenerator />;
+      case 'topicPractice':
+        return <TopicPractice />;
       case 'profile':
         return <Profile />;
       case 'leaderboard':
@@ -102,7 +102,7 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack, theme, toggleTheme, initialView
     pronunciation: 'Pronunciation Practice',
     mockTest: 'Mock A2 Exam',
     planner: 'Study Planner',
-    topics: 'Topic Generator',
+    topicPractice: 'Topic Practice',
     profile: 'My Profile',
     leaderboard: 'Leaderboard'
   };

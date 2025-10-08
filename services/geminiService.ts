@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, ApiConfig, AiProvider, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, ApiConfig, AiProvider, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -405,6 +405,100 @@ export const getImprovedAnswer = async (
     }
 };
 
+// --- Topic Practice Service ---
+const answerAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        feedback: {
+            type: Type.STRING,
+            description: "Provide 1-2 concise, helpful feedback points on the user's answer, comparing it to the example. Focus on grammar and key vocabulary mistakes. Be encouraging."
+        },
+        suggestion: {
+            type: Type.STRING,
+            description: "Provide a corrected and improved version of the user's answer, aligning its quality and style with the provided example answer. If the user's answer was good, provide a slightly different but equally good alternative."
+        }
+    },
+    required: ["feedback", "suggestion"]
+};
+
+export const analyzeUserAnswer = async (
+  question: string,
+  userAnswer: string,
+  exampleAnswer: string
+): Promise<AnswerAnalysis> => {
+    const prompt = `You are an expert A2 English tutor. A student is practicing speaking on a specific topic.
+- The question asked was: "${question}"
+- A good example answer is: "${exampleAnswer}"
+- The student's spoken answer was: "${userAnswer}"
+
+Your task is to analyze the student's answer. Compare it to the example answer for context and quality. Provide constructive feedback and a suggested improvement. You MUST respond in the specified JSON format.`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: answerAnalysisSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as AnswerAnalysis;
+        if (!parsed.feedback || !parsed.suggestion) {
+            throw new Error("Invalid analysis format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate analysis for your answer.");
+        return {
+            feedback: errorMessage,
+            suggestion: "Could not generate a suggestion. Please try again."
+        };
+    }
+};
+
+const topicQaSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            question: { type: Type.STRING, description: "A relevant question an examiner might ask." },
+            answer: { type: Type.STRING, description: "A simple, high-quality, A2-level example answer to the question." }
+        },
+        required: ["question", "answer"]
+    }
+};
+
+export const generatePersonalizedTopicQa = async (topic: string, userInput: string): Promise<TopicQA[]> => {
+    const prompt = `You are an expert A2 English test content creator. A user wants to practice the topic: "${topic}". Their specific subject is: "${userInput}".
+Generate a list of 2 relevant questions an examiner might ask about this. For each question, also provide a simple, high-quality, A2-level example answer.
+You MUST respond in a JSON format as an array of objects, where each object has a "question" and an "answer" key.`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: topicQaSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as TopicQA[];
+        if (!parsed || parsed.length === 0) {
+            throw new Error("Invalid Q&A format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate personalized questions.");
+        // Fallback
+        return [
+            { question: `Could you tell me more about ${userInput}?`, answer: errorMessage }
+        ];
+    }
+};
+
+
 // --- Pronunciation Practice Service Functions ---
 
 const pronunciationFeedbackSchema = {
@@ -561,19 +655,13 @@ export const generateTestImage = async (): Promise<string> => {
 let mockTestChat: Chat | null = null;
 
 const getMockTestSystemInstruction = (): string => {
-    const conversationTopics = [
-        "your daily routine", "your favourite food", "festivals in your country", "public transport", "watching films or TV", 
-        "your favourite music", "a recent personal experience", "shopping for clothes", "holidays and travel", 
-        "the weather", "your hometown or city", "your job or studies", "your friends", "weekends"
-    ];
-    // Choose one topic for the conversation phase.
-    const chosenTopic = conversationTopics[Math.floor(Math.random() * conversationTopics.length)];
+    // The topic for part 3 is now fixed to set up the directions task in part 4.
+    const chosenTopic = "your home or neighbourhood";
 
-    const directionDestinations = ["the post office", "the train station", "the library", "the nearest supermarket", "the city museum"];
-    const chosenDestination = directionDestinations[Math.floor(Math.random() * directionDestinations.length)];
-
-
-    // FIX: Overhauled the system prompt to be more explicit and sequential, preventing the AI from skipping user turns or asking multiple questions at once.
+    // The old system prompt for the mock test was too rigid and didn't adapt to the user's context for the directions part.
+    // This new prompt redesigns Part 3 and 4 to create a more natural and logical flow, directly addressing the user's request.
+    // Part 3 now focuses on the user's neighbourhood, which naturally leads to Part 4 asking for directions to a place the user themselves mentioned.
+    // This makes the test more personal, interactive, and a better assessment of the user's ability to give directions in a real-world context.
     return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm. You will conduct a complete, structured, multi-part mock test.
 CRITICAL INSTRUCTIONS:
 - You MUST ask questions ONE AT A TIME and always wait for the user to respond before continuing.
@@ -597,14 +685,14 @@ Part 2: Picture Description.
 5.  Third Question: After they answer, ask a THIRD and final imaginative question about the picture. Wait for their response.
 6.  After their response to the third question, your NEXT response must ONLY be the transition phrase: "Okay, thank you. Now, let's talk about ${chosenTopic}."
 
-Part 3: Topic Discussion.
-1.  After the user acknowledges the transition, begin the conversation on '${chosenTopic}'. Ask your first question on this topic. Wait for their response.
-2.  After they answer, ask a second follow-up question on the topic. Wait for their response.
-3.  After they answer, ask a third and final follow-up question on the topic. Wait for their response.
+Part 3: Topic Discussion about Home/Neighbourhood.
+1.  After the user acknowledges the transition, begin the conversation on '${chosenTopic}'. Your first question MUST be "What is it like where you live?". Wait for their response.
+2.  After they answer, your second question MUST be: "What is an interesting place near your home?". Wait for their response. THIS IS THE PLACE YOU WILL ASK FOR DIRECTIONS TO IN PART 4.
+3.  After they answer, ask a third and final follow-up question about that place (e.g., "What can you do there?"). Wait for their response.
 4.  After their final response in this part, your NEXT response must ONLY be the transition phrase: "Thank you. For the final part of the test, I'm going to ask you for some directions."
 
 Part 4: Directions Task.
-1.  After the user acknowledges the transition, you MUST say: "Imagine we are standing outside the town hall. I need to go to ${chosenDestination}. Can you tell me how to get there?". Wait for their response.
+1.  After the user acknowledges the transition, you MUST ask for directions to the interesting place they mentioned in Part 3. Your question must be something like: "That place sounds interesting. Can you tell me how to get there from your home?". Wait for their response.
 2.  After the user gives directions, ask ONE simple clarifying question (e.g., "Is it far from here?" or "What will I see when I am near there?"). Wait for their response.
 3.  After their final answer, your NEXT response MUST ONLY be the end-of-test phrase: "That is the end of the test. Thank you." Do not add any other words.`;
 };

@@ -46,13 +46,13 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
     -   **Comprehensive Assessment:** Receive a final score, detailed feedback, strengths, and areas for improvement from Gemini.
     -   **Transcript Review:** Go through your test transcript with AI-powered suggestions for every answer.
 -   **Skill Development Modules:**
+    -   **Topic Practice:** Practice speaking on pre-loaded topics like directions and weather, and get AI analysis of your answers.
     -   **Pronunciation Practice:** Get word-by-word feedback on your pronunciation of common English phrases.
     -   **Vocabulary Builder:** An interactive story-based game to learn and memorize new words.
     -   **Listening Practice:** Exercises with mock audio and comprehension questions.
     -   **Grammar Hub:** Learn from common mistakes and test your knowledge with interactive quizzes.
 -   **Personalized AI Tools:**
     -   **Study Planner:** Generates a custom study schedule based on your test date and availability.
-    -   **Topic Generator:** Creates common exam questions with high-quality example answers.
 
 ### 🎓 IELTS Exam Preparation
 

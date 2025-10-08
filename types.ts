@@ -1,5 +1,5 @@
 // FIX: Moved View type here from A2App.tsx to make it globally available and resolve import errors.
-export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topics' | 'profile' | 'leaderboard' | 'mockTest' | 'pronunciation';
+export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topicPractice' | 'profile' | 'leaderboard' | 'mockTest' | 'pronunciation';
 
 export enum Role {
   USER = 'user',
@@ -179,6 +179,13 @@ export interface PronunciationFeedback {
     overallFeedback: string;
     wordAnalysis: WordFeedback[];
 }
+
+// New type for Topic Practice answer analysis
+export interface AnswerAnalysis {
+    feedback: string;
+    suggestion: string;
+}
+
 
 // API Configuration Types
 export type AiProvider = 'gemini' | 'openai' | 'anthropic';

@@ -4,7 +4,17 @@ import { UserProfile } from '../types';
 // FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
 import { View } from '../types';
 import SkeletonLoader from './SkeletonLoader';
-import { ChatBubbleIcon, SoundWaveIcon, CardStackIcon, HeadphonesIcon, SparklesIcon, ClipboardDocumentCheckIcon } from './IconComponents';
+import { 
+    ChatBubbleIcon, 
+    SoundWaveIcon, 
+    CardStackIcon, 
+    HeadphonesIcon, 
+    SparklesIcon, 
+    ClipboardDocumentCheckIcon,
+    QuestionMarkCircleIcon,
+    AcademicCapIcon,
+    CalendarDaysIcon
+} from './IconComponents';
 
 interface DashboardProps {
   setActiveView: (view: View) => void;
@@ -22,13 +32,18 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
     </div>
 );
 
-const QuickLink: React.FC<{ title: string; description: string; onClick: () => void; }> = ({ title, description, onClick }) => (
+const QuickLink: React.FC<{ title: string; description: string; icon: React.ReactNode; onClick: () => void; }> = ({ title, description, icon, onClick }) => (
     <button
         onClick={onClick}
-        className="select-none bg-white dark:bg-slate-900 p-5 rounded-lg border border-slate-200 dark:border-slate-800 text-left hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-md active:bg-slate-100 dark:active:bg-slate-700 active:shadow-sm transition-all w-full"
+        className="select-none bg-white dark:bg-slate-900 p-5 rounded-lg border border-slate-200 dark:border-slate-800 text-left hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-md active:bg-slate-100 dark:active:bg-slate-700 active:shadow-sm transition-all w-full flex items-start gap-4"
     >
-        <h4 className="font-semibold text-indigo-600 dark:text-indigo-400">{title}</h4>
-        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{description}</p>
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            {icon}
+        </div>
+        <div>
+            <h4 className="font-semibold text-indigo-600 dark:text-indigo-400">{title}</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{description}</p>
+        </div>
     </button>
 );
 
@@ -103,12 +118,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Quick Start</h3>
                 {user.name ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <QuickLink title="Start Conversation Practice" description="Talk with the AI examiner." onClick={() => setActiveView('simulator')} />
-                        <QuickLink title="Take a Mock Exam" description="Simulate the full 7-minute test." onClick={() => setActiveView('mockTest')} />
-                        <QuickLink title="Practice Pronunciation" description="Get feedback on specific phrases." onClick={() => setActiveView('pronunciation')} />
-                        <QuickLink title="Learn New Words" description="Review your vocabulary flashcards." onClick={() => setActiveView('vocabulary')} />
-                        <QuickLink title="Test Your Grammar" description="Take a quick quiz." onClick={() => setActiveView('grammar')} />
-                        <QuickLink title="Practice Listening" description="Complete a listening exercise." onClick={() => setActiveView('listening')} />
+                        <QuickLink title="Start Conversation" description="Talk with the AI examiner in various scenarios." icon={<ChatBubbleIcon className="w-6 h-6" />} onClick={() => setActiveView('simulator')} />
+                        <QuickLink title="Take a Mock Exam" description="Simulate the full 7-minute test." icon={<ClipboardDocumentCheckIcon className="w-6 h-6" />} onClick={() => setActiveView('mockTest')} />
+                        <QuickLink title="Practice a Topic" description="Get AI feedback on common questions." icon={<QuestionMarkCircleIcon className="w-6 h-6" />} onClick={() => setActiveView('topicPractice')} />
+                        <QuickLink title="Practice Pronunciation" description="Get feedback on specific phrases." icon={<SoundWaveIcon className="w-6 h-6" />} onClick={() => setActiveView('pronunciation')} />
+                        <QuickLink title="Learn New Words" description="Build your vocabulary interactively." icon={<CardStackIcon className="w-6 h-6" />} onClick={() => setActiveView('vocabulary')} />
+                        <QuickLink title="Test Your Grammar" description="Take a quick quiz on common mistakes." icon={<AcademicCapIcon className="w-6 h-6" />} onClick={() => setActiveView('grammar')} />
+                        <QuickLink title="Practice Listening" description="Complete a listening exercise." icon={<HeadphonesIcon className="w-6 h-6" />} onClick={() => setActiveView('listening')} />
+                        <QuickLink title="Plan Your Study" description="Generate a personalized study schedule." icon={<CalendarDaysIcon className="w-6 h-6" />} onClick={() => setActiveView('planner')} />
                     </div>
                 ) : (
                      <div className="bg-slate-100 dark:bg-slate-800/50 p-5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-center">

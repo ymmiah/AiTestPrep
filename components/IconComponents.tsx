@@ -202,3 +202,21 @@ export const ArrowLeftIcon: React.FC<{ className?: string }> = ({ className }) =
       <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clipRule="evenodd" />
     </svg>
 );
+
+export const MapPinIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path fillRule="evenodd" d="M11.54 22.351l.07.07a1.5 1.5 0 002.121-2.121l-.07-.07L12 21.086l-1.64-1.64a1.5 1.5 0 00-2.12 2.121l.07.07L11.54 22.35zM12 2.25a6.75 6.75 0 00-6.75 6.75c0 3.52 3.11 9.22 6.16 12.31a.75.75 0 001.18 0C15.64 18.22 18.75 12.52 18.75 9A6.75 6.75 0 0012 2.25zM12 12a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+    </svg>
+);
+
+export const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-1.383-.597 15.248 15.248 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.5 3c1.74 0 3.41.81 4.5 2.088A5.995 5.995 0 0116.5 3c2.786 0 5.25 2.322 5.25 5.25 0 3.924-2.438 7.11-3.75 8.862a15.248 15.248 0 01-4.244 3.17 15.247 15.247 0 01-1.383.597l-.022.012-.007.003h-.001z" />
+    </svg>
+);
+
+export const ShoppingBagIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path fillRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.762.724-1.865 1.679l-1.263 12A1.875 1.875 0 002.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a4.5 4.5 0 10-9 0zM12 3a3 3 0 00-3 3v.75h6V6a3 3 0 00-3-3z" clipRule="evenodd" />
+    </svg>
+);

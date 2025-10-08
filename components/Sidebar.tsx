@@ -39,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { view: 'dashboard', label: 'Dashboard', icon: <HomeIcon className="w-5 h-5" /> },
     { view: 'simulator', label: 'Conversation', icon: <ChatBubbleIcon className="w-5 h-5" /> },
     { view: 'mockTest', label: 'Mock Exam', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" /> },
+    { view: 'topicPractice', label: 'Topic Practice', icon: <QuestionMarkCircleIcon className="w-5 h-5" /> },
     { view: 'pronunciation', label: 'Pronunciation', icon: <SoundWaveIcon className="w-5 h-5" /> },
     { view: 'vocabulary', label: 'Vocabulary', icon: <CardStackIcon className="w-5 h-5" /> },
     { view: 'listening', label: 'Listening', icon: <HeadphonesIcon className="w-5 h-5" /> },
@@ -46,8 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   ];
 
   const toolsNavItems = [
-    { view: 'planner', label: 'Planner', icon: <CalendarDaysIcon className="w-5 h-5" /> },
-    { view: 'topics', label: 'Topics', icon: <QuestionMarkCircleIcon className="w-5 h-5" /> },
+    { view: 'planner', label: 'Study Planner', icon: <CalendarDaysIcon className="w-5 h-5" /> },
   ];
 
   const profileNavItems = [
