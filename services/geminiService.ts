@@ -869,6 +869,48 @@ ${transcript}
 };
 
 // --- Academic Writing Service ---
+
+const academicPromptsSchema = {
+    type: Type.ARRAY,
+    items: { type: Type.STRING }
+};
+
+export const generateAcademicPrompts = async (topic: string): Promise<string[]> => {
+    const prompt = `You are an academic content creator. A university student has selected the topic: "${topic}". Generate a list of 3 distinct and specific academic essay prompts or questions suitable for a university-level assignment on this topic. You MUST respond in a JSON format as an array of strings.`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: academicPromptsSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as string[];
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            throw new Error("Invalid prompts format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate prompts.");
+        return [errorMessage];
+    }
+};
+
+export const generateStarterSentence = async (prompt: string): Promise<string> => {
+    const apiPrompt = `You are an expert academic writer. A student needs help starting their essay for the following prompt: "${prompt}". Generate a single, strong, academic-style opening sentence that directly addresses the prompt. This sentence should set a clear direction for the essay. Respond with ONLY the sentence text, without any extra explanations or quotation marks.`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: apiPrompt,
+        });
+        return result.text.trim();
+    } catch (error) {
+        return getApiErrorMessage(error, "Could not generate a starter sentence.");
+    }
+};
+
 const writingSuggestionSchema = {
     type: Type.OBJECT,
     properties: {
