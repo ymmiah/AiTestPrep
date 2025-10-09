@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IELTSReadingExercise, IELTSReadingQuestion } from '../../types';
-import { generateIELTSReadingExercise } from '../../services/geminiService';
+import { generateIELTSReadingExercise, updateUserProfile } from '../../services/geminiService';
 import SkeletonLoader from '../SkeletonLoader';
 import { BookOpenIcon, CheckCircleIcon, SparklesIcon } from '../IconComponents';
 
@@ -32,7 +32,7 @@ const IELTSReading: React.FC = () => {
         setUserAnswers(newAnswers);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!exercise) return;
         let correctCount = 0;
         exercise.questions.forEach((q, index) => {
@@ -42,6 +42,16 @@ const IELTSReading: React.FC = () => {
         });
         setScore(correctCount);
         setIsSubmitted(true);
+
+        const scorePercentage = Math.round((correctCount / exercise.questions.length) * 100);
+        await updateUserProfile(p => {
+            const ielts = p.progress.ielts;
+            const newCount = ielts.readingExercisesCompleted + 1;
+            const newAvg = ((ielts.avgReadingScore * ielts.readingExercisesCompleted) + scorePercentage) / newCount;
+            p.progress.ielts.readingExercisesCompleted = newCount;
+            p.progress.ielts.avgReadingScore = Math.round(newAvg);
+            return p;
+        });
     };
 
     const renderQuestion = (q: IELTSReadingQuestion, index: number) => {

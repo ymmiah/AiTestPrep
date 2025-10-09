@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HeadphonesIcon, BookOpenIcon, PencilIcon, ChatBubbleIcon, ClipboardDocumentCheckIcon } from './IconComponents';
+import { HeadphonesIcon, BookOpenIcon, PencilIcon, ChatBubbleIcon, ClipboardDocumentCheckIcon, AcademicCapIcon } from './IconComponents';
 import ModuleLayout from './ModuleLayout';
 
 import IELTSListening from './ielts/IELTSListening';
@@ -7,11 +7,15 @@ import IELTSReading from './ielts/IELTSReading';
 import IELTSWriting from './ielts/IELTSWriting';
 import IELTSSpeaking from './ielts/IELTSSpeaking';
 import IELTSMockTest from './ielts/IELTSMockTest';
+import { Theme } from '../types';
+
+type Module = 'landing' | 'a2' | 'ielts' | 'academic';
 
 interface IELTSPrepProps {
     onGoBack: () => void;
-    theme: string;
-    toggleTheme: () => void;
+    theme: Theme;
+    setTheme: (theme: Theme) => void;
+    onSelectModule: (module: Module) => void;
 }
 
 type IELTSView = 'dashboard' | 'listening' | 'reading' | 'writing' | 'speaking' | 'mockTest';
@@ -41,7 +45,7 @@ const IELTSSectionCard: React.FC<{ title: string; description: string; icon: Rea
 );
 
 
-const IELTSDashboard: React.FC<{ onSelectSection: (view: IELTSView) => void }> = ({ onSelectSection }) => (
+const IELTSDashboard: React.FC<{ onSelectSection: (view: IELTSView) => void; onSelectModule: (module: 'academic') => void }> = ({ onSelectSection, onSelectModule }) => (
     <div className="max-w-4xl mx-auto">
         <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Prepare for All Sections of the IELTS Test</h2>
@@ -74,6 +78,12 @@ const IELTSDashboard: React.FC<{ onSelectSection: (view: IELTSView) => void }> =
                 icon={<ChatBubbleIcon className="w-6 h-6" />}
                 onClick={() => onSelectSection('speaking')}
             />
+            <IELTSSectionCard 
+                title="Academic Writing Helper"
+                description="Get AI assistance with your academic essays, focusing on structure, tone, and British English conventions."
+                icon={<AcademicCapIcon className="w-6 h-6" />}
+                onClick={() => onSelectModule('academic')}
+            />
              <IELTSSectionCard 
                 title="Full Mock Test"
                 description="Experience a full, timed IELTS simulation covering all four sections to test your readiness."
@@ -86,7 +96,7 @@ const IELTSDashboard: React.FC<{ onSelectSection: (view: IELTSView) => void }> =
 );
 
 
-const IELTSPrep: React.FC<IELTSPrepProps> = ({ onGoBack, theme, toggleTheme }) => {
+const IELTSPrep: React.FC<IELTSPrepProps> = ({ onGoBack, theme, setTheme, onSelectModule }) => {
     const [view, setView] = useState<IELTSView>('dashboard');
 
     const viewTitles: { [key in IELTSView]: string } = {
@@ -112,7 +122,7 @@ const IELTSPrep: React.FC<IELTSPrepProps> = ({ onGoBack, theme, toggleTheme }) =
                 return <IELTSMockTest />;
             case 'dashboard':
             default:
-                return <IELTSDashboard onSelectSection={setView} />;
+                return <IELTSDashboard onSelectSection={setView} onSelectModule={onSelectModule} />;
         }
     };
 
@@ -120,8 +130,6 @@ const IELTSPrep: React.FC<IELTSPrepProps> = ({ onGoBack, theme, toggleTheme }) =
         <ModuleLayout
             title={viewTitles[view]}
             onGoBack={view === 'dashboard' ? onGoBack : () => setView('dashboard')}
-            theme={theme}
-            toggleTheme={toggleTheme}
         >
             <div className="p-4 md:p-8">
                 {renderIELTSView()}

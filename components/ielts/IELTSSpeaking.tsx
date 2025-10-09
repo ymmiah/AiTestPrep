@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IELTSSpeakingScript, IELTSSpeakingFeedback } from '../../types';
-import { generateIELTSSpeakingScript, getIELTSSpeakingFeedback } from '../../services/geminiService';
+import { generateIELTSSpeakingScript, getIELTSSpeakingFeedback, updateUserProfile } from '../../services/geminiService';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import SkeletonLoader from '../SkeletonLoader';
 import { ChatBubbleIcon, MicrophoneIcon, SparklesIcon, StopIcon } from '../IconComponents';
@@ -47,6 +47,15 @@ const IELTSSpeaking: React.FC = () => {
         const result = await getIELTSSpeakingFeedback(transcript, script!);
         setFeedback(result);
         setState('feedback');
+
+        await updateUserProfile(p => {
+            const ielts = p.progress.ielts;
+            const newCount = ielts.speakingSessionsCompleted + 1;
+            const newAvg = ((ielts.avgSpeakingBand * ielts.speakingSessionsCompleted) + result.overallBand) / newCount;
+            p.progress.ielts.speakingSessionsCompleted = newCount;
+            p.progress.ielts.avgSpeakingBand = parseFloat(newAvg.toFixed(1));
+            return p;
+        });
     };
 
     useEffect(() => {

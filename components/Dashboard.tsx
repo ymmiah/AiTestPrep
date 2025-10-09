@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { getUserProfile } from '../services/geminiService';
-import { UserProfile } from '../types';
+
+import React from 'react';
+import { UserProfile, Module } from '../types';
 // FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
 import { View } from '../types';
 import SkeletonLoader from './SkeletonLoader';
@@ -18,6 +18,8 @@ import {
 
 interface DashboardProps {
   setActiveView: (view: View) => void;
+  onNavigateToModule: (module: Module) => void;
+  userProfile: UserProfile | null;
 }
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; color: string; }> = ({ title, value, icon, color }) => (
@@ -48,47 +50,23 @@ const QuickLink: React.FC<{ title: string; description: string; icon: React.Reac
 );
 
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
-    const [user, setUser] = useState<UserProfile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            const userData = await getUserProfile();
-            setUser(userData);
-            setIsLoading(false);
-        };
-        fetchData();
-    }, []);
-
-    const SkeletonDashboard = () => (
-        <div className="space-y-8">
-            <div>
-                <SkeletonLoader className="h-8 w-3/4 mb-2" />
-                <SkeletonLoader className="h-5 w-1/2" />
+const Dashboard: React.FC<DashboardProps> = ({ setActiveView, onNavigateToModule, userProfile: user }) => {
+    if (!user) {
+        return (
+             <div className="space-y-8">
+                <div>
+                    <SkeletonLoader className="h-8 w-3/4 mb-2" />
+                    <SkeletonLoader className="h-5 w-1/2" />
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <SkeletonLoader className="h-28 rounded-xl" />
+                    <SkeletonLoader className="h-28 rounded-xl" />
+                </div>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <SkeletonLoader className="h-28 rounded-xl" />
-                <SkeletonLoader className="h-28 rounded-xl" />
-                <SkeletonLoader className="h-28 rounded-xl" />
-                <SkeletonLoader className="h-28 rounded-xl" />
-            </div>
-            <div>
-                 <SkeletonLoader className="h-7 w-1/4 mb-4" />
-                 <div className="grid md:grid-cols-2 gap-4">
-                    <SkeletonLoader className="h-24 rounded-lg" />
-                    <SkeletonLoader className="h-24 rounded-lg" />
-                 </div>
-            </div>
-        </div>
-    );
-
-    if (isLoading || !user) {
-        return <SkeletonDashboard />;
+        );
     }
     
-    const stats = user.progressStats;
+    const stats = user.progress.a2;
     const learnedWordsCount = Object.keys(user.vocabularyProgress || {}).length;
 
     return (
@@ -100,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
                 <p className="text-slate-600 dark:text-slate-400 mt-1">
                     {user.name 
                         ? "Here's a summary of your progress. Keep up the great work!" 
-                        : <>Please visit your <button onClick={() => setActiveView('profile')} className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-none">profile</button> to set your name and start your journey.</>
+                        : <>Please visit your <button onClick={() => onNavigateToModule('profile')} className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline focus:outline-none">profile</button> to set your name and start your journey.</>
                     }
                 </p>
             </div>

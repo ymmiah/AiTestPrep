@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, ApiConfig, AiProvider, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis, AcademicFeedback, WritingSuggestion, Theme } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -7,9 +7,6 @@ import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai'
 // this would be in its own file (e.g., userService.ts).
 
 const USER_PROFILE_KEY = 'userProfileData';
-const API_CONFIG_KEY = 'apiConfig';
-const OLD_API_KEY_KEY = 'gemini_api_key'; // For migration purposes
-
 
 // --- Helper function for API errors ---
 const getApiErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -69,14 +66,30 @@ const generateReferenceNumber = (): string => {
 };
 
 const getDefaultProfile = (): UserProfile => ({
-  name: '', // Start with an empty name to prompt user input
+  name: '',
   points: 0,
   badges: [],
   referenceNumber: null,
-  progressStats: {
-    sessionsCompleted: 0,
-    avgPronunciationScore: 0,
-    listeningScore: 0,
+  theme: 'light',
+  progress: {
+    a2: {
+      sessionsCompleted: 0,
+      avgPronunciationScore: 0,
+      listeningScore: 0,
+    },
+    ielts: {
+      writingTasksCompleted: 0,
+      avgWritingBand: 0,
+      listeningExercisesCompleted: 0,
+      avgListeningScore: 0,
+      readingExercisesCompleted: 0,
+      avgReadingScore: 0,
+      speakingSessionsCompleted: 0,
+      avgSpeakingBand: 0,
+    },
+    academic: {
+      assignmentsChecked: 0,
+    }
   },
   conversationHistory: {},
   vocabularyProgress: {},
@@ -92,25 +105,32 @@ export const getUserProfile = async (): Promise<UserProfile> => {
           const parsed = JSON.parse(storedProfile);
           const defaultProfile = getDefaultProfile();
           
-          // Force a deep merge to ensure all nested properties exist and handle migration
-          const migratedProfile = {
+          // Migration logic from old `progressStats` to new `progress.a2`
+          if (parsed.progressStats && !parsed.progress) {
+              parsed.progress = defaultProfile.progress; // Initialize new structure
+              parsed.progress.a2 = parsed.progressStats; // Move old data
+              delete parsed.progressStats; // Delete old key
+          }
+
+          // Deep merge to ensure all new properties (ielts, academic, theme) exist on older profiles
+          const migratedProfile: UserProfile = {
               ...defaultProfile,
               ...parsed,
-              progressStats: {
-                  ...defaultProfile.progressStats,
-                  ...parsed.progressStats
+              theme: parsed.theme || defaultProfile.theme,
+              progress: {
+                  ...defaultProfile.progress,
+                  ...(parsed.progress || {}),
+                  a2: { ...defaultProfile.progress.a2, ...(parsed.progress?.a2 || {}) },
+                  ielts: { ...defaultProfile.progress.ielts, ...(parsed.progress?.ielts || {}) },
+                  academic: { ...defaultProfile.progress.academic, ...(parsed.progress?.academic || {}) },
               },
               conversationHistory: parsed.conversationHistory || {},
               badges: parsed.badges || [],
-              vocabularyProgress: parsed.vocabularyProgress || {} // Add this field if missing
+              vocabularyProgress: parsed.vocabularyProgress || {}
           };
-
-          // Clean up the old, deprecated property
-          if (migratedProfile.progressStats.hasOwnProperty('vocabularyLearned')) {
-              delete migratedProfile.progressStats.vocabularyLearned;
-              // Resave the cleaned profile to complete the migration
-              localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(migratedProfile));
-          }
+          
+          // Resave the potentially migrated profile to ensure data structure is current
+          localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(migratedProfile));
           
           resolve(migratedProfile);
         } else {
@@ -144,6 +164,12 @@ export const updateUserProfile = async (
   return updatedProfile;
 };
 
+export const updateUserTheme = async (theme: Theme): Promise<UserProfile> => {
+    return updateUserProfile(profile => {
+        profile.theme = theme;
+        return profile;
+    });
+};
 
 export const updateUserName = async (name: string): Promise<UserProfile> => {
     const sanitizedName = name.trim();
@@ -185,64 +211,12 @@ export const clearConversationHistory = async (scenario: string): Promise<void> 
 // --- API Configuration Management ---
 
 /**
- * Retrieves the API configuration from localStorage.
- * Handles migration from the old single-key format.
- * @returns {ApiConfig} The current API configuration.
- */
-export const getApiConfig = (): ApiConfig => {
-    const storedConfig = localStorage.getItem(API_CONFIG_KEY);
-    if (storedConfig) {
-        return JSON.parse(storedConfig);
-    }
-
-    // Migration logic: If old key exists, create new config from it.
-    const oldKey = localStorage.getItem(OLD_API_KEY_KEY);
-    if (oldKey) {
-        const newConfig: ApiConfig = {
-            provider: 'gemini',
-            keys: { gemini: oldKey }
-        };
-        localStorage.setItem(API_CONFIG_KEY, JSON.stringify(newConfig));
-        localStorage.removeItem(OLD_API_KEY_KEY); // Clean up the old key
-        return newConfig;
-    }
-
-    // Default empty config if nothing is found
-    return {
-        provider: 'gemini',
-        keys: {}
-    };
-};
-
-/**
- * Saves the updated API configuration and reloads the page to apply changes.
- * @param {ApiConfig} config The new configuration object to save.
- */
-export const saveApiConfig = (config: ApiConfig): void => {
-    localStorage.setItem(API_CONFIG_KEY, JSON.stringify(config));
-    window.location.reload();
-};
-
-
-/**
- * Checks if the required Gemini API key is set for the app to function.
- * @returns {boolean} True if a Gemini key is set, false otherwise.
- */
-export const isApiKeySet = (): boolean => {
-    const config = getApiConfig();
-    return !!config.keys.gemini;
-};
-
-/**
  * Retrieves the Gemini API key. This app is architected for Gemini, so this
- * function specifically looks for the Gemini key, regardless of the user's
- * selected provider (which might be for future use).
+ * function specifically looks for the Gemini key.
  * @returns {string} The Gemini API key.
  * @throws {Error} If no Gemini API key can be found.
  */
 const getApiKey = (): string => {
-    // FIX: Per coding guidelines, API key must be retrieved from process.env.API_KEY.
-    // The previous implementation incorrectly tried to get it from localStorage via getApiConfig().
     if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
         return process.env.API_KEY;
     }
@@ -893,6 +867,91 @@ ${transcript}
         };
     }
 };
+
+// --- Academic Writing Service ---
+const writingSuggestionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        original_excerpt: { type: Type.STRING, description: 'A short, specific excerpt from the user\'s original text that needs improvement.' },
+        suggestion_for_improvement: { type: Type.STRING, description: 'A clear explanation of HOW to improve the excerpt. Provide a corrected example within the explanation.' }
+    },
+    required: ['original_excerpt', 'suggestion_for_improvement']
+};
+
+const academicFeedbackSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overall_assessment: { type: Type.STRING, description: 'A 1-2 paragraph summary of the text\'s strengths and main areas for improvement.' },
+        structural_feedback: { type: Type.STRING, description: 'A bulleted list of feedback on the text\'s structure, paragraphing, and logical flow. Use a newline character (\'\\n\') to separate each bullet point.' },
+        clarity_and_style_feedback: { type: Type.STRING, description: 'A bulleted list of feedback on sentence structure, word choice, and academic tone. Use a newline character (\'\\n\') to separate each bullet point.' },
+        improvement_suggestions: { type: Type.ARRAY, items: writingSuggestionSchema },
+        corrections: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    original_us: { type: Type.STRING, description: 'The original American English word or phrase.' },
+                    corrected_uk: { type: Type.STRING, description: 'The corrected British English equivalent.' },
+                    explanation: { type: Type.STRING, description: 'A brief explanation of the US vs UK difference.' }
+                },
+                required: ['original_us', 'corrected_uk', 'explanation']
+            },
+            description: 'A list of all American English to British English corrections made.'
+        }
+    },
+    required: ['overall_assessment', 'structural_feedback', 'clarity_and_style_feedback', 'improvement_suggestions', 'corrections']
+};
+
+export const getAcademicWritingFeedback = async (topic: string, text: string): Promise<AcademicFeedback> => {
+    const prompt = `You are an expert academic tutor specializing in British English. Your purpose is to TEACH users how to improve their academic writing, NOT to rewrite their work for them.
+
+GUARDRAIL: If the user's text is extremely short (less than 20 words), is just a list of keywords, or directly asks you to write the assignment, you MUST refuse. In your refusal, you must set 'overall_assessment' to 'I cannot write your assignment for you. My purpose is to help you improve your own work. Please provide a draft of your writing, and I will give you constructive feedback.' and leave all other fields as empty strings or arrays.
+
+For a valid user submission, your task is to analyze their text and provide comprehensive, constructive feedback.
+
+CRITICAL INSTRUCTIONS:
+1.  **Analyze, Don't Rewrite:** Do not provide a fully rewritten version of the text. Instead, provide feedback and suggestions.
+2.  **British English ONLY:** All your feedback and corrections must adhere strictly to British English spelling, grammar, and vocabulary.
+3.  **Provide Structured Feedback:** Fill out the JSON schema with detailed feedback covering the overall piece, its structure, and its style.
+4.  **Give Specific Examples:** Use the 'improvement_suggestions' array to pull specific sentences from the user's text and explain how they could be improved.
+5.  **Identify Corrections:** List all American to British English changes in the 'corrections' array.
+6.  **JSON Output:** You MUST respond in the specified JSON format.
+
+**Assignment Topic:**
+${topic}
+
+**User's Text:**
+${text}`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: academicFeedbackSchema,
+            }
+        });
+
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as AcademicFeedback;
+        if (!parsed.overall_assessment) {
+            throw new Error("Invalid feedback format from API.");
+        }
+        return parsed;
+
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate academic feedback.");
+        return {
+            overall_assessment: errorMessage,
+            structural_feedback: "Error generating feedback.",
+            clarity_and_style_feedback: "Error generating feedback.",
+            improvement_suggestions: [],
+            corrections: []
+        };
+    }
+};
+
 
 // --- IELTS Service Functions ---
 

@@ -92,14 +92,14 @@ const ConversationSimulator: React.FC = () => {
 
       await updateUserProfile(profile => {
         profile.points += pointsAwarded;
-        profile.progressStats.sessionsCompleted += 1;
+        profile.progress.a2.sessionsCompleted += 1;
 
         if (pronunciationScore !== null) {
-            const { avgPronunciationScore } = profile.progressStats;
-            const sessionCount = profile.progressStats.sessionsCompleted;
+            const { avgPronunciationScore } = profile.progress.a2;
+            const sessionCount = profile.progress.a2.sessionsCompleted;
             // Using a weighted average formula: new_avg = (old_avg * (n-1) + new_score) / n
             const oldTotalScore = avgPronunciationScore * (sessionCount - 1);
-            profile.progressStats.avgPronunciationScore = Math.round((oldTotalScore + pronunciationScore) / sessionCount);
+            profile.progress.a2.avgPronunciationScore = Math.round((oldTotalScore + pronunciationScore) / sessionCount);
         }
         return profile;
       });

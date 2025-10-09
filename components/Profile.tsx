@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Badge, ApiConfig, AiProvider } from '../types';
-// FIX: Import 'updateUserName' from geminiService to fix an undefined function error when saving the user's name.
-import { getUserProfile, updateUserProfile, getApiConfig, saveApiConfig, updateUserName } from '../services/geminiService';
+import { UserProfile, Badge, Theme } from '../types';
+import { updateUserName, updateUserProfile } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
-import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, KeyIcon, EyeIcon, EyeSlashIcon } from './IconComponents';
+import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, BookOpenIcon, ArrowLeftIcon } from './IconComponents';
+import { useNotification } from '../contexts/NotificationContext';
 
 const iconMap: { [key in Badge['icon']]: React.FC<{ className?: string }> } = {
     AcademicCapIcon,
@@ -38,50 +38,40 @@ const ProfileStatCard: React.FC<{ title: string; value: string | number; icon: R
     </div>
 );
 
+interface ProfileProps {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  userProfile: UserProfile | null;
+  forceProfileRefetch: () => void;
+  onGoBack: () => void;
+}
 
-const Profile: React.FC = () => {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [apiConfig, setApiConfig] = useState<ApiConfig | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+const Profile: React.FC<ProfileProps> = ({ theme, setTheme, userProfile: profile, forceProfileRefetch, onGoBack }) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [editingName, setEditingName] = useState('');
-    
-    // State for the new API configuration UI
-    const [selectedProvider, setSelectedProvider] = useState<AiProvider>('gemini');
-    const [apiKeyInput, setApiKeyInput] = useState('');
-    const [isKeyVisible, setIsKeyVisible] = useState(false);
     const [isDevMode, setIsDevMode] = useState(false);
-
-    const fetchProfileData = async () => {
-        setIsLoading(true);
-        const [profileData, configData] = await Promise.all([getUserProfile(), getApiConfig()]);
-        
-        setProfile(profileData);
-        setEditingName(profileData.name);
-        if (!profileData.name) {
-            setIsEditingName(true);
-        }
-        setIsDevMode(profileData.isDeveloperMode || false);
-
-        setApiConfig(configData);
-        setSelectedProvider(configData.provider);
-        setApiKeyInput(configData.keys[configData.provider] || '');
-
-        setIsLoading(false);
-    };
+    const [isSaving, setIsSaving] = useState(false);
+    const { addNotification } = useNotification();
 
     useEffect(() => {
-        fetchProfileData();
-    }, []);
+        if (profile) {
+            setEditingName(profile.name);
+            setIsDevMode(profile.isDeveloperMode || false);
+        }
+    }, [profile]);
 
     const handleSaveName = async () => {
-        if (!profile || !editingName.trim()) return;
-        setIsLoading(true);
-        const updatedProfile = await updateUserName(editingName);
-        setProfile(updatedProfile);
-        setEditingName(updatedProfile.name);
+        if (!editingName.trim()) return;
+        setIsSaving(true);
+        await updateUserName(editingName);
+        forceProfileRefetch(); // Trigger global profile reload
         setIsEditingName(false);
-        setIsLoading(false);
+        setIsSaving(false);
+        addNotification({
+            type: 'success',
+            title: 'Profile Updated!',
+            message: 'Your name has been saved successfully.',
+        });
     };
 
     const handleCancelName = () => {
@@ -89,25 +79,6 @@ const Profile: React.FC = () => {
         setIsEditingName(false);
         setEditingName(profile.name);
     }
-    
-    const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newProvider = e.target.value as AiProvider;
-        setSelectedProvider(newProvider);
-        setApiKeyInput(apiConfig?.keys[newProvider] || '');
-    };
-
-    const handleSaveApiKey = () => {
-        if (!apiConfig) return;
-
-        const newConfig: ApiConfig = {
-            provider: selectedProvider,
-            keys: {
-                ...apiConfig.keys,
-                [selectedProvider]: apiKeyInput.trim(),
-            }
-        };
-        saveApiConfig(newConfig); // This will save and reload the page
-    };
 
     const handleDevModeToggle = async (enabled: boolean) => {
         setIsDevMode(enabled);
@@ -116,7 +87,6 @@ const Profile: React.FC = () => {
             isDeveloperMode: enabled,
         }));
     };
-
 
     const SkeletonProfile = () => (
         <div className="space-y-8">
@@ -137,21 +107,54 @@ const Profile: React.FC = () => {
         </div>
     );
 
-    if (isLoading || !profile || !apiConfig) {
+    if (!profile) {
         return <SkeletonProfile />;
     }
     
-    const { progressStats } = profile;
+    // New User Onboarding View
+    if (!profile.name) {
+        return (
+            <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 text-center animate-fade-in">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Set Up Your Profile</h2>
+                <p className="text-slate-600 dark:text-slate-400 mt-2">Please enter your name to personalize your experience and track your progress.</p>
+                <div className="flex flex-col items-center gap-2 mt-6 max-w-xs mx-auto">
+                    <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        placeholder="Enter your name"
+                        className="w-full text-center px-4 py-2 text-lg bg-slate-100 dark:bg-slate-800 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
+                        autoFocus
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                    />
+                    <button 
+                        onClick={handleSaveName} 
+                        disabled={isSaving || !editingName.trim()}
+                        className="w-full select-none mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 active:bg-indigo-800 text-base font-semibold disabled:bg-indigo-300"
+                    >
+                        {isSaving ? 'Saving...' : 'Save Name'}
+                    </button>
+                </div>
+            </div>
+        )
+    }
+    
+    const { progress } = profile;
     const learnedWordsCount = Object.keys(profile.vocabularyProgress || {}).length;
-    const providerNames: { [key in AiProvider]: string } = {
-        gemini: 'Google Gemini',
-        openai: 'OpenAI',
-        anthropic: 'Anthropic'
-    };
-
 
     return (
         <div className="space-y-8 animate-fade-in">
+            <header className="flex items-center gap-4">
+                 <button 
+                    onClick={onGoBack} 
+                    className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 active:bg-slate-300 dark:active:bg-slate-700 transition-colors"
+                    aria-label="Back"
+                >
+                    <ArrowLeftIcon className="w-6 h-6" />
+                </button>
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">My Profile</h1>
+            </header>
+
              <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                 <div className="text-center">
                     <img
@@ -172,10 +175,9 @@ const Profile: React.FC = () => {
                                     onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                                 />
                                 <div className="flex items-center gap-2 mt-2">
-                                    <button onClick={handleSaveName} className="select-none px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 active:bg-teal-700 text-sm font-semibold">Save</button>
+                                    <button onClick={handleSaveName} disabled={isSaving} className="select-none px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 active:bg-teal-700 text-sm font-semibold disabled:bg-teal-300">{isSaving ? '...' : 'Save'}</button>
                                     {profile.name && <button onClick={handleCancelName} className="select-none px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-md hover:bg-slate-300 active:bg-slate-400 text-sm font-semibold">Cancel</button>}
                                 </div>
-                                {!profile.name && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Please set your name to save progress.</p>}
                             </div>
                         ) : (
                             <div className="flex items-center justify-center gap-2">
@@ -207,13 +209,42 @@ const Profile: React.FC = () => {
 
             <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">My Progress</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ProfileStatCard title="Sessions Completed" value={progressStats.sessionsCompleted} icon={<ChatBubbleIcon className="w-5 h-5" />} />
-                    <ProfileStatCard title="Vocabulary Learned" value={learnedWordsCount} icon={<CardStackIcon className="w-5 h-5" />} />
-                    <ProfileStatCard title="Avg. Pronunciation" value={`${progressStats.avgPronunciationScore}%`} icon={<SoundWaveIcon className="w-5 h-5" />} />
-                    <ProfileStatCard title="Avg. Listening Score" value={`${progressStats.listeningScore}%`} icon={<HeadphonesIcon className="w-5 h-5" />} />
+                
+                {/* A2 Progress */}
+                <div className="mt-4">
+                    <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">A2 Test Progress</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <ProfileStatCard title="Sessions Completed" value={progress.a2.sessionsCompleted} icon={<ChatBubbleIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Vocabulary Learned" value={learnedWordsCount} icon={<CardStackIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Avg. Pronunciation" value={`${progress.a2.avgPronunciationScore}%`} icon={<SoundWaveIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Avg. Listening Score" value={`${progress.a2.listeningScore}%`} icon={<HeadphonesIcon className="w-5 h-5" />} />
+                    </div>
+                </div>
+
+                {/* IELTS Progress */}
+                <div className="mt-6">
+                    <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">IELTS Progress</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <ProfileStatCard title="Writing Tasks" value={progress.ielts.writingTasksCompleted} icon={<PencilIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Avg. Writing Band" value={progress.ielts.avgWritingBand.toFixed(1)} icon={<SparklesIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Speaking Sessions" value={progress.ielts.speakingSessionsCompleted} icon={<ChatBubbleIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Avg. Speaking Band" value={progress.ielts.avgSpeakingBand.toFixed(1)} icon={<SparklesIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Listening" value={`${progress.ielts.listeningExercisesCompleted} tasks`} icon={<HeadphonesIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Avg. Listening" value={`${progress.ielts.avgListeningScore}%`} icon={<SparklesIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Reading" value={`${progress.ielts.readingExercisesCompleted} tasks`} icon={<BookOpenIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Avg. Reading" value={`${progress.ielts.avgReadingScore}%`} icon={<SparklesIcon className="w-5 h-5" />} />
+                    </div>
+                </div>
+                
+                {/* Academic Progress */}
+                <div className="mt-6">
+                     <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">Academic Writing</h4>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <ProfileStatCard title="Assignments Checked" value={progress.academic.assignmentsChecked} icon={<AcademicCapIcon className="w-5 h-5" />} />
+                     </div>
                 </div>
             </div>
+
 
             <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">My Badges</h3>
@@ -226,68 +257,6 @@ const Profile: React.FC = () => {
                 ) : (
                     <p className="text-slate-600 dark:text-slate-400 text-center py-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">You haven't earned any badges yet. Keep practicing!</p>
                 )}
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                    <KeyIcon className="w-6 h-6" />
-                    AI Model Configuration
-                </h3>
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="ai-provider" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            AI Provider
-                        </label>
-                        <select
-                            id="ai-provider"
-                            value={selectedProvider}
-                            onChange={handleProviderChange}
-                            className="mt-1 w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                            <option value="gemini">Google Gemini</option>
-                            <option value="openai" disabled>OpenAI (Coming Soon)</option>
-                            <option value="anthropic" disabled>Anthropic (Coming Soon)</option>
-                        </select>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                            Note: This application is currently optimized for Google Gemini. Support for other providers is in development.
-                        </p>
-                    </div>
-                     <div>
-                        <label htmlFor="api-key" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                           Your {providerNames[selectedProvider]} API Key
-                        </label>
-                        <div className="relative mt-1">
-                            <input
-                                type={isKeyVisible ? 'text' : 'password'}
-                                id="api-key"
-                                value={apiKeyInput}
-                                onChange={(e) => setApiKeyInput(e.target.value)}
-                                placeholder={`Enter your ${providerNames[selectedProvider]} key`}
-                                className="w-full px-3 py-2 pr-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setIsKeyVisible(!isKeyVisible)}
-                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                                aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
-                            >
-                                {isKeyVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <button
-                            onClick={handleSaveApiKey}
-                            className="select-none w-full sm:w-auto px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 active:bg-teal-700 text-sm font-semibold disabled:bg-teal-300"
-                            disabled={!apiKeyInput.trim()}
-                        >
-                            Save & Reload
-                        </button>
-                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                            Your key is stored securely in your browser's local storage.
-                        </p>
-                    </div>
-                </div>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">

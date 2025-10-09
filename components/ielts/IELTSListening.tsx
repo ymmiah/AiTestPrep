@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IELTSListeningExercise, IELTSListeningQuestion, IELTSListeningFormQuestion, IELTSListeningMCQ } from '../../types';
-import { generateIELTSListeningExercise } from '../../services/geminiService';
+import { generateIELTSListeningExercise, updateUserProfile } from '../../services/geminiService';
 import { HeadphonesIcon, SpeakerWaveIcon, CheckCircleIcon, SparklesIcon } from '../IconComponents';
 import SkeletonLoader from '../SkeletonLoader';
 
@@ -47,7 +47,7 @@ const IELTSListening: React.FC = () => {
         setUserAnswers(newAnswers);
     };
 
-    const checkAnswers = () => {
+    const checkAnswers = async () => {
         if (!exercise) return;
         let correctCount = 0;
         exercise.questions.forEach((q, index) => {
@@ -59,6 +59,16 @@ const IELTSListening: React.FC = () => {
         });
         setScore(correctCount);
         setExerciseState('results');
+
+        const scorePercentage = Math.round((correctCount / exercise.questions.length) * 100);
+        await updateUserProfile(p => {
+            const ielts = p.progress.ielts;
+            const newCount = ielts.listeningExercisesCompleted + 1;
+            const newAvg = ((ielts.avgListeningScore * ielts.listeningExercisesCompleted) + scorePercentage) / newCount;
+            p.progress.ielts.listeningExercisesCompleted = newCount;
+            p.progress.ielts.avgListeningScore = Math.round(newAvg);
+            return p;
+        });
     };
     
     if (exerciseState === 'loading') {

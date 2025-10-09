@@ -1,16 +1,17 @@
 import React from 'react';
-import ThemeSwitcher from './ThemeSwitcher';
 import { ArrowLeftIcon } from './IconComponents';
+import { Theme } from '../types';
+import ThemeSwitcher from './ThemeSwitcher';
 
 interface ModuleLayoutProps {
     title: string;
     onGoBack: () => void;
-    theme: string;
-    toggleTheme: () => void;
     children: React.ReactNode;
+    theme: Theme;
+    setTheme: (theme: Theme) => void;
 }
 
-const ModuleLayout: React.FC<ModuleLayoutProps> = ({ title, onGoBack, theme, toggleTheme, children }) => {
+const ModuleLayout: React.FC<ModuleLayoutProps> = ({ title, onGoBack, children, theme, setTheme }) => {
     return (
         <div className="flex-1 flex flex-col h-full">
             <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-200/80 dark:border-slate-800/80 md:py-6 md:px-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
@@ -26,9 +27,7 @@ const ModuleLayout: React.FC<ModuleLayoutProps> = ({ title, onGoBack, theme, tog
                         {title}
                     </h1>
                 </div>
-                <div className="flex items-center">
-                    <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
-                </div>
+                <ThemeSwitcher theme={theme} setTheme={setTheme} />
             </header>
             <main className="flex-1 overflow-y-auto">
                 {children}

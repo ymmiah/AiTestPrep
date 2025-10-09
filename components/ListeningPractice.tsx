@@ -41,12 +41,12 @@ const ListeningPractice: React.FC = () => {
         const scorePercentage = Math.round((calculatedScore / exercise.questions.length) * 100);
 
         await updateUserProfile(profile => {
-            const { listeningScore } = profile.progressStats;
+            const { listeningScore } = profile.progress.a2;
             // Average the new score with the old one. Could be improved with a running average.
             if (listeningScore > 0) {
-                 profile.progressStats.listeningScore = Math.round((listeningScore + scorePercentage) / 2);
+                 profile.progress.a2.listeningScore = Math.round((listeningScore + scorePercentage) / 2);
             } else {
-                 profile.progressStats.listeningScore = scorePercentage;
+                 profile.progress.a2.listeningScore = scorePercentage;
             }
             return profile;
         });

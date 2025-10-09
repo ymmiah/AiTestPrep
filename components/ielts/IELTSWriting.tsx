@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { generateIELTSWritingPrompt, getIELTSWritingFeedback, generateIELTSModelAnswer } from '../../services/geminiService';
+import { generateIELTSWritingPrompt, getIELTSWritingFeedback, generateIELTSModelAnswer, updateUserProfile } from '../../services/geminiService';
 import { IELTSWritingFeedback } from '../../types';
 import SkeletonLoader from '../SkeletonLoader';
 import { SparklesIcon, DocumentArrowDownIcon } from '../IconComponents';
@@ -155,6 +155,15 @@ const IELTSWriting: React.FC = () => {
         const result = await getIELTSWritingFeedback(prompt, essay, task);
         setFeedback(result);
         setIsGettingFeedback(false);
+
+        await updateUserProfile(p => {
+            const ielts = p.progress.ielts;
+            const newCount = ielts.writingTasksCompleted + 1;
+            const newAvg = ((ielts.avgWritingBand * ielts.writingTasksCompleted) + result.overallBand) / newCount;
+            p.progress.ielts.writingTasksCompleted = newCount;
+            p.progress.ielts.avgWritingBand = parseFloat(newAvg.toFixed(1));
+            return p;
+        });
     };
 
     const handleGetModelAnswer = async () => {

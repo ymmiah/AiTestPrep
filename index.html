@@ -80,6 +80,84 @@
       .animate-slide-up {
         animation: slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       }
+      
+      /* --- NEW MIDNIGHT (DARK) THEME OVERRIDES --- */
+      .dark:not(.theme-oceanic) body,
+      .dark:not(.theme-oceanic) .dark\:bg-slate-950 {
+        background-color: #020617; /* slate-950 */
+      }
+      .dark:not(.theme-oceanic) .dark\:bg-slate-900,
+      .dark:not(.theme-oceanic) .dark\:bg-slate-900\/95,
+      .dark:not(.theme-oceanic) .dark\:bg-slate-900\/80,
+      .dark:not(.theme-oceanic) .dark\:bg-slate-900\/50 {
+        background-color: rgb(15 23 42 / var(--tw-bg-opacity, 1)); /* slate-900 */
+      }
+      .dark:not(.theme-oceanic) .dark\:bg-slate-800,
+      .dark:not(.theme-oceanic) .dark\:bg-slate-800\/50 {
+         background-color: rgb(30 41 59 / var(--tw-bg-opacity, 1)); /* slate-800 */
+      }
+      .dark:not(.theme-oceanic) .dark\:hover\:bg-slate-800:hover {
+          background-color: rgb(51 65 85); /* slate-700 for hover */
+      }
+      .dark:not(.theme-oceanic) .dark\:border-slate-800 {
+        border-color: rgb(30 41 59); /* slate-800 */
+      }
+      .dark:not(.theme-oceanic) .dark\:border-slate-700 {
+        border-color: rgb(51 65 85); /* slate-700 */
+      }
+
+      /* --- NEW OCEANIC THEME OVERRIDES --- */
+      .theme-oceanic.dark body,
+      .theme-oceanic.dark .dark\:bg-slate-950 {
+        background-color: rgb(12 28 50);
+      }
+      .theme-oceanic.dark .dark\:bg-slate-900,
+      .theme-oceanic.dark .dark\:bg-slate-900\/95,
+      .theme-oceanic.dark .dark\:bg-slate-900\/80,
+      .theme-oceanic.dark .dark\:bg-slate-900\/50 {
+        background-color: rgb(17 38 69 / var(--tw-bg-opacity, 1));
+      }
+      .theme-oceanic.dark .dark\:bg-slate-800,
+      .theme-oceanic.dark .dark\:bg-slate-800\/50 {
+         background-color: rgb(21 47 80 / var(--tw-bg-opacity, 1));
+      }
+      .theme-oceanic.dark .dark\:hover\:bg-slate-800:hover {
+          background-color: rgb(25, 55, 95);
+      }
+      .theme-oceanic.dark .dark\:text-gray-100 {
+        color: rgb(224 242 254);
+      }
+      .theme-oceanic.dark .dark\:text-slate-300,
+      .theme-oceanic.dark .dark\:text-slate-400 {
+        color: rgb(186 230 253);
+      }
+      .theme-oceanic.dark .dark\:border-slate-800 {
+        border-color: rgb(22 50 94);
+      }
+      .theme-oceanic.dark .dark\:border-slate-700 {
+        border-color: rgb(30 60 100);
+      }
+      .theme-oceanic.dark .dark\:text-indigo-400 {
+        color: rgb(56 189 248);
+      }
+       .theme-oceanic.dark .dark\:text-indigo-300 {
+        color: rgb(125 211 252);
+      }
+      .theme-oceanic.dark .bg-indigo-600 {
+        background-color: rgb(14 165 233);
+      }
+      .theme-oceanic.dark .hover\:bg-indigo-700:hover {
+        background-color: rgb(2 132 199);
+      }
+       .theme-oceanic.dark .dark\:bg-indigo-900\/50 {
+        background-color: rgb(14 116 144 / 0.5);
+      }
+       .theme-oceanic.dark .dark\:text-indigo-300 {
+        color: rgb(103 232 249);
+      }
+       .theme-oceanic.dark .dark\:focus\:ring-offset-slate-900:focus {
+        --tw-ring-offset-color: rgb(12 28 50);
+      }
     </style>
   <script type="importmap">
 {

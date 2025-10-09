@@ -1,5 +1,9 @@
+
 // FIX: Moved View type here from A2App.tsx to make it globally available and resolve import errors.
-export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topicPractice' | 'profile' | 'leaderboard' | 'mockTest' | 'pronunciation';
+export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topicPractice' | 'leaderboard' | 'mockTest' | 'pronunciation';
+export type Module = 'landing' | 'a2' | 'ielts' | 'academic' | 'profile';
+
+export type Theme = 'light' | 'dark' | 'oceanic';
 
 export enum Role {
   USER = 'user',
@@ -80,11 +84,13 @@ export interface CommonMistake {
   explanation: string;
 }
 
+// Deprecated, use A2Progress instead. Kept for migration.
 export interface ProgressStats {
   sessionsCompleted: number;
   avgPronunciationScore: number;
   listeningScore: number;
 }
+
 
 export interface QuizQuestion {
   question: string;
@@ -111,12 +117,38 @@ export interface VocabularyItem {
   nextReviewDate: string; // ISO date string
 }
 
+// New Centralized Progress Types
+export interface A2Progress {
+    sessionsCompleted: number;
+    avgPronunciationScore: number;
+    listeningScore: number;
+}
+export interface IELTSProgress {
+    writingTasksCompleted: number;
+    avgWritingBand: number;
+    listeningExercisesCompleted: number;
+    avgListeningScore: number; // as a percentage
+    readingExercisesCompleted: number;
+    avgReadingScore: number; // as a percentage
+    speakingSessionsCompleted: number;
+    avgSpeakingBand: number;
+}
+export interface AcademicProgress {
+    assignmentsChecked: number;
+}
+
 export interface UserProfile {
   name: string;
   points: number;
   badges: Badge[];
   referenceNumber: string | null;
-  progressStats: ProgressStats;
+  theme: Theme;
+  progressStats?: ProgressStats; // Kept for migration from old structure
+  progress: {
+      a2: A2Progress;
+      ielts: IELTSProgress;
+      academic: AcademicProgress;
+  };
   conversationHistory?: {
     [scenario: string]: Message[];
   };
@@ -186,18 +218,6 @@ export interface AnswerAnalysis {
     suggestion: string;
 }
 
-
-// API Configuration Types
-export type AiProvider = 'gemini' | 'openai' | 'anthropic';
-
-export interface ApiConfig {
-    provider: AiProvider;
-    keys: {
-        gemini?: string;
-        openai?: string;
-        anthropic?: string;
-    };
-}
 
 // IELTS Types
 export interface IELTSWritingFeedback {
@@ -275,4 +295,24 @@ export interface IELTSSpeakingFeedback {
   grammaticalRangeAndAccuracy: { score: number; feedback: string; };
   pronunciation: { score: number; feedback: string; };
   suggestedImprovements: string;
+}
+
+// Academic Writing Helper Types
+export interface BritishEnglishCorrection {
+    original_us: string;
+    corrected_uk: string;
+    explanation: string;
+}
+
+export interface WritingSuggestion {
+    original_excerpt: string;
+    suggestion_for_improvement: string;
+}
+
+export interface AcademicFeedback {
+    overall_assessment: string;
+    structural_feedback: string;
+    clarity_and_style_feedback: string;
+    improvement_suggestions: WritingSuggestion[];
+    corrections: BritishEnglishCorrection[];
 }
