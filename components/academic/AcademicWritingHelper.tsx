@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { AcademicFeedback } from '../../types';
-import { getAcademicWritingFeedback, updateUserProfile, generateAcademicPrompts, generateStarterSentence } from '../../services/geminiService';
-import { SparklesIcon, CheckCircleIcon, LightbulbIcon, PencilIcon, ArrowLeftIcon } from '../IconComponents';
+import { AcademicFeedback, AcademicSource } from '../../types';
+import { getAcademicWritingFeedback, updateUserProfile, generateAcademicPrompts, generateThesisStatement, generateEssayOutline, findAcademicSources, paraphraseText, adjustTextTone } from '../../services/geminiService';
+import { SparklesIcon, CheckCircleIcon, LightbulbIcon, PencilIcon, ArrowLeftIcon, ListBulletIcon, BeakerIcon, LinkIcon, BookOpenIcon, ChatBubbleIcon } from '../IconComponents';
 import SkeletonLoader from '../SkeletonLoader';
 
 const academicTopics = {
@@ -41,9 +41,9 @@ const ResultDisplay: React.FC<{ feedback: AcademicFeedback }> = ({ feedback }) =
 
     if (feedback.overall_assessment.includes("I cannot write your assignment for you.")) {
         return (
-             <div className="p-6 bg-rose-50 dark:bg-rose-900/50 rounded-lg border border-rose-200 dark:border-rose-700 text-center">
-                <h3 className="text-xl font-bold text-rose-800 dark:text-rose-200">Request Denied</h3>
-                <p className="text-rose-700 dark:text-rose-300 mt-2">{feedback.overall_assessment}</p>
+             <div className="p-6 bg-rose-50 dark:bg-rose-900/50 rounded-lg border border-rose-200 dark:border-rose-700">
+                <h3 className="text-xl font-bold text-rose-800 dark:text-rose-200 text-center">Request Denied</h3>
+                <p className="whitespace-pre-wrap text-rose-700 dark:text-rose-300 mt-2">{feedback.overall_assessment}</p>
             </div>
         )
     }
@@ -141,47 +141,168 @@ const LoadingSkeleton = () => (
     </div>
 );
 
+const AdvancedWritingToolkit: React.FC = () => {
+    const [inputText, setInputText] = useState('');
+    const [selectedTone, setSelectedTone] = useState('Formal');
+    const [paraphraseResults, setParaphraseResults] = useState<string[]>([]);
+    const [toneResult, setToneResult] = useState('');
+    const [isParaphrasing, setIsParaphrasing] = useState(false);
+    const [isAdjustingTone, setIsAdjustingTone] = useState(false);
+
+    const handleParaphrase = async () => {
+        if (!inputText.trim()) return;
+        setIsParaphrasing(true);
+        setParaphraseResults([]);
+        setToneResult('');
+        const results = await paraphraseText(inputText);
+        setParaphraseResults(results);
+        setIsParaphrasing(false);
+    };
+
+    const handleAdjustTone = async () => {
+        if (!inputText.trim()) return;
+        setIsAdjustingTone(true);
+        setParaphraseResults([]);
+        setToneResult('');
+        const result = await adjustTextTone(inputText, selectedTone);
+        setToneResult(result);
+        setIsAdjustingTone(false);
+    };
+
+    const isLoading = isParaphrasing || isAdjustingTone;
+
+    return (
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-indigo-500" />Advanced Writing Toolkit</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Refine your writing at the sentence level. Paste a short piece of text below to get started.</p>
+            <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                rows={4}
+                placeholder="Paste a sentence or short paragraph here..."
+                className="w-full p-2 mt-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500"
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button onClick={handleParaphrase} disabled={isLoading || !inputText} className="select-none inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 active:bg-indigo-800 text-sm font-semibold disabled:bg-indigo-300">
+                    <BookOpenIcon className="w-4 h-4" />
+                    {isParaphrasing ? 'Paraphrasing...' : 'Paraphrase'}
+                </button>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={selectedTone}
+                        onChange={(e) => setSelectedTone(e.target.value)}
+                        disabled={isLoading}
+                        className="h-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 dark:text-slate-100 text-sm"
+                    >
+                        <option>Formal</option>
+                        <option>Persuasive</option>
+                        <option>Concise</option>
+                    </select>
+                    <button onClick={handleAdjustTone} disabled={isLoading || !inputText} className="select-none inline-flex items-center gap-2 px-4 py-2 bg-slate-600 dark:bg-slate-600 text-white rounded-md hover:bg-slate-700 active:bg-slate-800 text-sm font-semibold disabled:bg-slate-400">
+                        <ChatBubbleIcon className="w-4 h-4" />
+                        {isAdjustingTone ? 'Adjusting...' : 'Adjust Tone'}
+                    </button>
+                </div>
+            </div>
+
+            {isLoading && <SkeletonLoader className="h-20 w-full mt-3 rounded-md" />}
+
+            {paraphraseResults.length > 0 && (
+                <div className="mt-4 space-y-2 animate-fade-in">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200">Paraphrased Versions:</h4>
+                    {paraphraseResults.map((result, i) => (
+                        <div key={i} className="p-3 bg-white dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600">
+                            <p className="text-sm text-slate-800 dark:text-slate-100">{result}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {toneResult && (
+                <div className="mt-4 animate-fade-in">
+                     <h4 className="font-semibold text-slate-700 dark:text-slate-200">{selectedTone} Version:</h4>
+                     <div className="p-3 bg-white dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600">
+                        <p className="text-sm text-slate-800 dark:text-slate-100">{toneResult}</p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AcademicWritingHelper: React.FC = () => {
     const [step, setStep] = useState<'topic_selection' | 'writing_helper'>('topic_selection');
     const [selectedTopic, setSelectedTopic] = useState('');
     const [isCustomTopic, setIsCustomTopic] = useState(false);
     
     const [prompts, setPrompts] = useState<string[]>([]);
+    const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
     const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
     
-    const [starterSentences, setStarterSentences] = useState<{ [prompt: string]: string }>({});
-    const [isLoadingStarter, setIsLoadingStarter] = useState<string | null>(null);
-
+    const [thesis, setThesis] = useState('');
+    const [isLoadingThesis, setIsLoadingThesis] = useState(false);
+    
+    const [outline, setOutline] = useState('');
+    const [isLoadingOutline, setIsLoadingOutline] = useState(false);
+    
+    const [sources, setSources] = useState<AcademicSource[]>([]);
+    const [isLoadingSources, setIsLoadingSources] = useState(false);
+    
     const [inputText, setInputText] = useState('');
     const [feedback, setFeedback] = useState<AcademicFeedback | null>(null);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [error, setError] = useState('');
 
+    const resetWritingState = () => {
+        setPrompts([]);
+        setSelectedPrompt(null);
+        setThesis('');
+        setOutline('');
+        setSources([]);
+        setInputText('');
+        setFeedback(null);
+    };
+
     const handleTopicSelect = (topic: string, isCustom = false) => {
         setSelectedTopic(topic);
         setIsCustomTopic(isCustom);
         setStep('writing_helper');
-        setPrompts([]);
-        setStarterSentences({});
-        setInputText('');
-        setFeedback(null);
+        resetWritingState();
     };
     
     const handleGeneratePrompts = async () => {
         if (!selectedTopic) return;
         setIsLoadingPrompts(true);
-        setPrompts([]);
-        setStarterSentences({});
+        resetWritingState();
         const result = await generateAcademicPrompts(selectedTopic);
         setPrompts(result);
         setIsLoadingPrompts(false);
     };
 
-    const handleGetStarterSentence = async (prompt: string) => {
-        setIsLoadingStarter(prompt);
-        const sentence = await generateStarterSentence(prompt);
-        setStarterSentences(prev => ({ ...prev, [prompt]: sentence }));
-        setIsLoadingStarter(null);
+    const handleGenerateThesis = async (prompt: string) => {
+        setSelectedPrompt(prompt);
+        setIsLoadingThesis(true);
+        setThesis('');
+        const result = await generateThesisStatement(prompt);
+        setThesis(result);
+        setIsLoadingThesis(false);
+    };
+
+    const handleGenerateOutline = async () => {
+        if (!selectedPrompt || !thesis) return;
+        setIsLoadingOutline(true);
+        setOutline('');
+        const result = await generateEssayOutline(selectedPrompt, thesis);
+        setOutline(result);
+        setIsLoadingOutline(false);
+    };
+
+    const handleFindSources = async () => {
+        if (!selectedTopic) return;
+        setIsLoadingSources(true);
+        setSources([]);
+        const result = await findAcademicSources(selectedTopic);
+        setSources(result);
+        setIsLoadingSources(false);
     };
 
     const handleGetFeedback = async () => {
@@ -218,7 +339,7 @@ const AcademicWritingHelper: React.FC = () => {
             <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Assignment Writing Helper</h2>
                 <p className="text-slate-600 dark:text-slate-400 mt-2">
-                    Select a topic to get started. Our AI tutor will help you with writing prompts and feedback.
+                    Select a topic to get started with our advanced pre-writing toolkit and feedback analyzer.
                 </p>
             </div>
             <div className="space-y-6">
@@ -270,46 +391,86 @@ const AcademicWritingHelper: React.FC = () => {
             </div>
             
             <div className="space-y-6">
-                {/* Prompt Generation */}
+                {/* Pre-Writing Toolkit */}
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                     <h3 className="text-lg font-bold text-slate-800 dark:text-white">Writing Prompts & Ideas</h3>
-                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Stuck? Generate some specific essay questions for your topic.</p>
+                     <h3 className="text-lg font-bold text-slate-800 dark:text-white">1. Pre-Writing Toolkit</h3>
+                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Generate ideas, structure, and sources before you start writing.</p>
+                     
                      <div className="mt-3">
-                        <button onClick={handleGeneratePrompts} disabled={isLoadingPrompts || !selectedTopic} className="select-none inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 active:bg-indigo-800 text-sm font-semibold disabled:bg-indigo-300">
-                             <SparklesIcon className="w-4 h-4"/>
-                             {isLoadingPrompts ? 'Generating...' : 'Generate Prompts'}
+                        <h4 className="font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-200"><LightbulbIcon className="w-5 h-5"/>Essay Prompts</h4>
+                        <button onClick={handleGeneratePrompts} disabled={isLoadingPrompts || !selectedTopic} className="mt-2 text-xs font-semibold text-teal-600 hover:underline disabled:opacity-50">
+                             {isLoadingPrompts ? 'Generating...' : 'Generate Essay Questions'}
                         </button>
                      </div>
+                     
                      {isLoadingPrompts && <SkeletonLoader className="h-24 w-full mt-3 rounded-md" />}
                      {prompts.length > 0 && (
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-2 space-y-3">
                             {prompts.map((prompt, i) => (
-                                <div key={i} className="p-3 bg-white dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600">
+                                <div key={i} className={`p-3 bg-white dark:bg-slate-700 rounded-md border-2 ${selectedPrompt === prompt ? 'border-indigo-500' : 'border-slate-200 dark:border-slate-600'}`}>
                                     <p className="font-semibold text-slate-800 dark:text-slate-100">{prompt}</p>
-                                    {starterSentences[prompt] ? (
-                                        <div className="mt-2 p-2 bg-teal-50 dark:bg-teal-900/50 rounded text-sm text-teal-800 dark:text-teal-200 border-l-4 border-teal-500">
-                                            <strong>Starter:</strong> <em>{starterSentences[prompt]}</em>
-                                        </div>
-                                    ) : (
-                                        <button onClick={() => handleGetStarterSentence(prompt)} disabled={!!isLoadingStarter} className="mt-2 text-xs font-semibold text-teal-600 hover:underline disabled:opacity-50">
-                                            {isLoadingStarter === prompt ? 'Thinking...' : 'Get a Starter Sentence'}
-                                        </button>
-                                    )}
+                                    <button onClick={() => handleGenerateThesis(prompt)} disabled={isLoadingThesis} className="mt-2 text-xs font-semibold text-teal-600 hover:underline disabled:opacity-50">
+                                        {isLoadingThesis && selectedPrompt === prompt ? 'Thinking...' : 'Generate Thesis Statement'}
+                                    </button>
                                 </div>
                             ))}
                         </div>
                      )}
+
+                    <div className="mt-3 space-y-4">
+                        {/* Thesis Statement */}
+                        <div>
+                            <h4 className="font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-200"><BeakerIcon className="w-5 h-5"/>Thesis Statement</h4>
+                            <textarea
+                                value={thesis}
+                                onChange={(e) => setThesis(e.target.value)}
+                                rows={2}
+                                placeholder={isLoadingThesis ? "Generating thesis..." : "Your thesis will appear here. It's the core argument of your essay."}
+                                className="w-full p-2 mt-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md"
+                            />
+                        </div>
+                        {/* Outline */}
+                        <div>
+                             <h4 className="font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-200"><ListBulletIcon className="w-5 h-5"/>Essay Outline</h4>
+                             <button onClick={handleGenerateOutline} disabled={!thesis || isLoadingOutline} className="mt-2 text-xs font-semibold text-teal-600 hover:underline disabled:opacity-50">
+                                {isLoadingOutline ? 'Creating Outline...' : 'Create Outline from Thesis'}
+                             </button>
+                             {isLoadingOutline && <SkeletonLoader className="h-20 w-full mt-2 rounded-md" />}
+                             {outline && <pre className="whitespace-pre-wrap font-sans text-sm mt-2 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md">{outline}</pre>}
+                        </div>
+                         {/* Research Assistant */}
+                        <div>
+                            <h4 className="font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-200"><LinkIcon className="w-5 h-5"/>Research Assistant</h4>
+                            <button onClick={handleFindSources} disabled={isLoadingSources || !selectedTopic} className="mt-2 text-xs font-semibold text-teal-600 hover:underline disabled:opacity-50">
+                               {isLoadingSources ? 'Searching...' : 'Find Web Sources'}
+                            </button>
+                            {isLoadingSources && <SkeletonLoader className="h-16 w-full mt-2 rounded-md" />}
+                            {sources.length > 0 && (
+                                <div className="mt-2 space-y-2">
+                                    {sources.map(source => (
+                                        <a href={source.uri} target="_blank" rel="noopener noreferrer" key={source.uri} className="block p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700">
+                                            <p className="font-semibold text-indigo-600 dark:text-indigo-400 truncate">{source.title}</p>
+                                            <p className="text-xs text-slate-500 truncate">{source.uri}</p>
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                {/* Main Writing Area */}
+                {/* Advanced Writing Toolkit */}
+                <AdvancedWritingToolkit />
+
+                {/* Feedback Analyzer */}
                 <div>
-                    <label htmlFor="assignment-text" className="block text-lg font-bold text-slate-800 dark:text-white mb-2">Your Text</label>
+                    <label htmlFor="assignment-text" className="block text-lg font-bold text-slate-800 dark:text-white mb-2">2. Write Your Draft & Get Feedback</label>
                     <textarea
                         id="assignment-text"
                         rows={12}
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Paste your assignment text here..."
+                        placeholder="Paste your complete assignment text here to get a full analysis..."
                         className="w-full p-3 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
                     />
                 </div>
@@ -321,7 +482,7 @@ const AcademicWritingHelper: React.FC = () => {
                         className="select-none inline-flex items-center justify-center gap-2 px-8 py-3 text-base font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:bg-teal-300"
                     >
                         <CheckCircleIcon className="w-5 h-5" />
-                        {isLoadingFeedback ? 'Analyzing...' : 'Get Feedback'}
+                        {isLoadingFeedback ? 'Analyzing...' : 'Analyze My Writing'}
                     </button>
                 </div>
             </div>

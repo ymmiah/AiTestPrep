@@ -1,4 +1,3 @@
-
 // FIX: Moved View type here from A2App.tsx to make it globally available and resolve import errors.
 export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topicPractice' | 'leaderboard' | 'mockTest' | 'pronunciation';
 export type Module = 'landing' | 'a2' | 'ielts' | 'academic' | 'profile';
@@ -315,4 +314,9 @@ export interface AcademicFeedback {
     clarity_and_style_feedback: string;
     improvement_suggestions: WritingSuggestion[];
     corrections: BritishEnglishCorrection[];
+}
+
+export interface AcademicSource {
+    title: string;
+    uri: string;
 }

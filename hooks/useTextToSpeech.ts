@@ -85,6 +85,15 @@ export const useTextToSpeech = (): TextToSpeechHook => {
 
     utterance.onerror = (event) => {
       const synthesisErrorEvent = event as SpeechSynthesisErrorEvent;
+      // An 'interrupted' error is expected when the user speaks or stops the conversation.
+      // We don't want to log this as an error in the console.
+      if (synthesisErrorEvent.error === 'interrupted') {
+        setIsSpeaking(false);
+        utteranceRef.current = null;
+        if (onEndCallback) onEndCallback();
+        return; 
+      }
+      
       console.error('SpeechSynthesisUtterance error:', synthesisErrorEvent.error, 'for text:', `"${text}"`);
       setIsSpeaking(false);
       utteranceRef.current = null;

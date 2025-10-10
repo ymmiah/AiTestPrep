@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis, AcademicFeedback, WritingSuggestion, Theme } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis, AcademicFeedback, WritingSuggestion, Theme, AcademicSource } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -581,7 +581,7 @@ const imagePrompts = [
     'A beautiful, quiet beach with blue water and a few people relaxing on sun loungers.',
     'A classroom scene with a teacher writing on a whiteboard and young students at their desks.',
     'A person walking their dog in a park during autumn, with colorful leaves on the ground.',
-    'A photorealistic image of a postman delivering letters to a house on a suburban street.',
+    'A photorealistic image of a postman delivering letters to a suburban street.',
     'A lively birthday party scene with a group of people around a cake with lit candles.',
     'A quiet public library with shelves full of books and people reading at tables.',
     'A farmer driving a red tractor in a green field under a clear blue sky.',
@@ -629,13 +629,109 @@ export const generateTestImage = async (): Promise<string> => {
 let mockTestChat: Chat | null = null;
 
 const getMockTestSystemInstruction = (): string => {
-    // The topic for part 3 is now fixed to set up the directions task in part 4.
-    const chosenTopic = "your home or neighbourhood";
+    // --- Part 1 Randomization ---
+    const part1_questions = [
+        "What is the weather like in your city today?",
+        "Do you work or are you a student?",
+        "Can you tell me something about your hometown?",
+        "What do you like to do on weekends?",
+        "How did you travel here today?",
+    ];
+    const selectedPart1Question = part1_questions[Math.floor(Math.random() * part1_questions.length)];
 
-    // The old system prompt for the mock test was too rigid and didn't adapt to the user's context for the directions part.
-    // This new prompt redesigns Part 3 and 4 to create a more natural and logical flow, directly addressing the user's request.
-    // Part 3 now focuses on the user's neighbourhood, which naturally leads to Part 4 asking for directions to a place the user themselves mentioned.
-    // This makes the test more personal, interactive, and a better assessment of the user's ability to give directions in a real-world context.
+    // --- Part 3 & 4 Randomization ---
+    interface TestTopic {
+        part3_topic: string;
+        part3_questions: string[];
+        part4_intro: string;
+        part4_task: string;
+    }
+
+    const testTopics: TestTopic[] = [
+        {
+            part3_topic: "your home or neighbourhood",
+            part3_questions: [
+                "What is it like where you live?",
+                "What is an interesting place near your home?",
+                "What can you do there?",
+            ],
+            part4_intro: "For the final part of the test, I'm going to ask you for some directions.",
+            part4_task: `You MUST ask for directions to the interesting place they mentioned. Your question must be something like: "That place sounds interesting. Can you tell me how to get there from your home?"`,
+        },
+        {
+            part3_topic: "your hobbies and free time",
+            part3_questions: [
+                "What do you like to do in your free time?",
+                "Tell me about one of your favorite hobbies.",
+                "Why do you enjoy it so much?",
+            ],
+            part4_intro: "For the final part of the test, I'm going to ask you to explain something.",
+            part4_task: `You MUST ask the user to explain how to do the hobby they just mentioned. Your question must be something like: "That hobby sounds fun. Can you explain to me how to do it? Give me some simple steps."`,
+        },
+        {
+            part3_topic: "food and cooking",
+            part3_questions: [
+                "What is a popular type of food in your country?",
+                "Tell me about your favourite dish to eat.",
+                "What ingredients are in it?",
+            ],
+            part4_intro: "For the final part of the test, I'm going to ask you for some instructions.",
+            part4_task: `You MUST ask the user how to make the favourite dish they just described. Your question must be something like: "That dish sounds delicious. Can you tell me the basic steps to cook it?"`,
+        },
+        {
+            part3_topic: "holidays and travel",
+            part3_questions: [
+                "What was the last holiday you went on?",
+                "Where did you go?",
+                "What did you do there?",
+            ],
+            part4_intro: "For the final part of the test, I want you to describe something from memory.",
+            part4_task: `You MUST ask the user to describe their favourite memory or photo from the holiday they just mentioned. Your question must be something like: "That sounds like a great trip. Can you describe your favourite memory from that holiday in detail?"`,
+        },
+        {
+            part3_topic: "shopping",
+            part3_questions: [
+                "Do you enjoy going shopping?",
+                "What kind of things do you usually buy?",
+                "Tell me about your favourite shop.",
+            ],
+            part4_intro: "For the final part of the test, let's talk about a shopping trip.",
+            part4_task: `You MUST ask the user to describe their last shopping trip. Your question must be something like: "Can you tell me about the last time you went shopping? Where did you go and what did you buy?"`,
+        },
+        {
+            part3_topic: "transport",
+            part3_questions: [
+                "How do you usually travel around your city?",
+                "What is public transport like where you live?",
+                "Do you prefer to travel by bus or by train? Why?",
+            ],
+            part4_intro: "For the final part, I'd like you to describe a journey.",
+            part4_task: `You MUST ask the user to describe a memorable journey they have taken. Your question must be something like: "Please tell me about a memorable journey you have made, either long or short."`,
+        },
+        {
+            part3_topic: "your daily routine",
+            part3_questions: [
+                "What time do you usually wake up in the morning?",
+                "What do you do on a typical weekday?",
+                "How is your weekend different from your weekday?",
+            ],
+            part4_intro: "Now for the last part, let's talk about your favourite time of day.",
+            part4_task: `You MUST ask the user to describe their favourite part of the day. Your question must be something like: "What is your favourite part of the day? Please tell me why."`,
+        },
+        {
+            part3_topic: "work and studies",
+            part3_questions: [
+                "Do you have a job, or are you a student?",
+                "What do you do/study?",
+                "What is the most interesting part of your job/studies?",
+            ],
+            part4_intro: "To finish the test, let's talk about your future plans.",
+            part4_task: `You MUST ask the user about their career or study plans for the future. Your question must be something like: "What are your plans for your career or studies in the future?"`,
+        }
+    ];
+
+    const selectedTopic = testTopics[Math.floor(Math.random() * testTopics.length)];
+
     return `You are a professional, friendly, and patient examiner for the A2 English speaking test. Your tone should be encouraging and calm. You will conduct a complete, structured, multi-part mock test.
 CRITICAL INSTRUCTIONS:
 - You MUST ask questions ONE AT A TIME and always wait for the user to respond before continuing.
@@ -648,7 +744,7 @@ Follow this 4-part structure STRICTLY:
 Part 1: Introduction.
 1.  Start with EXACTLY: "Hello. My name is Alex. Can you please tell me your full name?". Wait for the user's response.
 2.  Next, ask "And where are you from?". Wait for the user's response.
-3.  Next, ask ONE more simple introductory question (e.g., "What is the weather like in your city?" or "Do you work or are you a student?"). Wait for the user's response.
+3.  Next, ask EXACTLY: "${selectedPart1Question}". Wait for the user's response.
 4.  After the user answers the third question, your NEXT response must ONLY be the transition phrase: "Thank you. Now, in the next part, we are going to look at a picture."
 
 Part 2: Picture Description.
@@ -657,17 +753,19 @@ Part 2: Picture Description.
 3.  First Question: Ask ONE relevant follow-up question about the picture. Wait for their response.
 4.  Second Question: After they answer, ask a SECOND, DIFFERENT follow-up question. Wait for their response.
 5.  Third Question: After they answer, ask a THIRD and final imaginative question about the picture. Wait for their response.
-6.  After their response to the third question, your NEXT response must ONLY be the transition phrase: "Okay, thank you. Now, let's talk about ${chosenTopic}."
+6.  After their response to the third question, your NEXT response must ONLY be the transition phrase: "Okay, thank you. Now, let's talk about ${selectedTopic.part3_topic}."
 
-Part 3: Topic Discussion about Home/Neighbourhood.
-1.  After the user acknowledges the transition, begin the conversation on '${chosenTopic}'. Your first question MUST be "What is it like where you live?". Wait for their response.
-2.  After they answer, your second question MUST be: "What is an interesting place near your home?". Wait for their response. THIS IS THE PLACE YOU WILL ASK FOR DIRECTIONS TO IN PART 4.
-3.  After they answer, ask a third and final follow-up question about that place (e.g., "What can you do there?"). Wait for their response.
-4.  After their final response in this part, your NEXT response must ONLY be the transition phrase: "Thank you. For the final part of the test, I'm going to ask you for some directions."
+Part 3: Topic Discussion.
+1.  After the user acknowledges the transition, begin the conversation on '${selectedTopic.part3_topic}'.
+2.  You will ask the following three questions ONE BY ONE. Wait for the user's response after each question before asking the next.
+    - Question 1: "${selectedTopic.part3_questions[0]}"
+    - Question 2: "${selectedTopic.part3_questions[1]}"
+    - Question 3: "${selectedTopic.part3_questions[2]}"
+3.  After their final response in this part, your NEXT response must ONLY be the transition phrase: "Thank you. ${selectedTopic.part4_intro}"
 
-Part 4: Directions Task.
-1.  After the user acknowledges the transition, you MUST ask for directions to the interesting place they mentioned in Part 3. Your question must be something like: "That place sounds interesting. Can you tell me how to get there from your home?". Wait for their response.
-2.  After the user gives directions, ask ONE simple clarifying question (e.g., "Is it far from here?" or "What will I see when I am near there?"). Wait for their response.
+Part 4: Related Task.
+1.  After the user acknowledges the transition, ${selectedTopic.part4_task} Wait for their response.
+2.  After the user gives their main response, ask ONE simple clarifying follow-up question (e.g., "Is it difficult?" or "How long does it take?"). Wait for their response.
 3.  After their final answer, your NEXT response MUST ONLY be the end-of-test phrase: "That is the end of the test. Thank you." Do not add any other words.`;
 };
 
@@ -911,6 +1009,129 @@ export const generateStarterSentence = async (prompt: string): Promise<string> =
     }
 };
 
+export const generateThesisStatement = async (prompt: string): Promise<string> => {
+    const apiPrompt = `You are an expert academic writing tutor. A student is working on the following essay prompt: "${prompt}". Your task is to generate a single, clear, concise, and debatable thesis statement that directly answers the prompt. The thesis statement should propose an arguable point, not just state a fact. Respond with ONLY the thesis statement text, without any extra explanations or quotation marks.`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: apiPrompt,
+        });
+        return result.text.trim();
+    } catch (error) {
+        return getApiErrorMessage(error, "Could not generate a thesis statement.");
+    }
+};
+
+export const generateEssayOutline = async (prompt: string, thesis: string): Promise<string> => {
+    const apiPrompt = `You are an expert academic writing tutor. A student has the following essay prompt and thesis statement. Generate a standard 5-paragraph essay outline based on them. The outline should be well-structured and logical.
+
+**Essay Prompt:** "${prompt}"
+**Thesis Statement:** "${thesis}"
+
+Please format the response as a simple text outline, using Roman numerals for main sections (I. Introduction, II. Body Paragraph 1, etc.) and capital letters for sub-points. For example:
+I. Introduction
+   A. Hook
+   B. Background
+   C. Thesis Statement
+II. Body Paragraph 1
+   A. Main Point
+   B. Evidence/Example
+   ...and so on.
+Respond with ONLY the outline text.`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: apiPrompt,
+        });
+        return result.text.trim();
+    } catch (error) {
+        return getApiErrorMessage(error, "Could not generate an essay outline.");
+    }
+};
+
+export const findAcademicSources = async (query: string): Promise<AcademicSource[]> => {
+    const prompt = `Find relevant, and credible web sources for a university student researching the topic: "${query}".`;
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+            },
+        });
+        
+        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (!chunks || !Array.isArray(chunks)) {
+            return [];
+        }
+
+        const sources: AcademicSource[] = chunks
+            .map((chunk: any) => ({
+                title: chunk.web?.title || 'Untitled',
+                uri: chunk.web?.uri || '',
+            }))
+            .filter(source => source.uri); // Filter out any sources without a URI
+
+        // Deduplicate sources based on URI
+        const uniqueSources = Array.from(new Map(sources.map(s => [s.uri, s])).values());
+        
+        return uniqueSources.slice(0, 5); // Return top 5 unique sources
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not find sources due to an error.");
+        console.error("Source finder error:", errorMessage);
+        return [{ title: "Error fetching sources", uri: "#" }];
+    }
+};
+
+const paraphraseSchema = {
+    type: Type.ARRAY,
+    items: { type: Type.STRING },
+    description: "A list of 2-3 alternative, academically appropriate ways to phrase the original text."
+};
+
+export const paraphraseText = async (text: string): Promise<string[]> => {
+    const prompt = `You are an expert academic writing tool. Your task is to paraphrase the following text. Provide 2-3 different, high-quality alternative phrasings that are suitable for a university-level assignment. Maintain the original meaning. You MUST respond in a JSON format as an array of strings.
+
+    Text to paraphrase:
+    "${text}"`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: paraphraseSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as string[];
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            throw new Error("Invalid paraphrase format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate paraphrases.");
+        return [errorMessage];
+    }
+};
+
+export const adjustTextTone = async (text: string, tone: string): Promise<string> => {
+    const prompt = `You are an expert academic writing editor. Rewrite the following text to have a more "${tone}" tone. Maintain the original meaning but adjust the style, vocabulary, and sentence structure as needed. Respond with ONLY the rewritten text, without any extra explanations.
+
+    Original Text:
+    "${text}"`;
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return result.text.trim();
+    } catch (error) {
+        return getApiErrorMessage(error, `Could not adjust tone to "${tone}".`);
+    }
+};
+
+
 const writingSuggestionSchema = {
     type: Type.OBJECT,
     properties: {
@@ -923,7 +1144,7 @@ const writingSuggestionSchema = {
 const academicFeedbackSchema = {
     type: Type.OBJECT,
     properties: {
-        overall_assessment: { type: Type.STRING, description: 'A 1-2 paragraph summary of the text\'s strengths and main areas for improvement.' },
+        overall_assessment: { type: Type.STRING, description: 'A 1-2 paragraph summary of the text\'s strengths and main areas for improvement. Can also be used for educational refusal messages.' },
         structural_feedback: { type: Type.STRING, description: 'A bulleted list of feedback on the text\'s structure, paragraphing, and logical flow. Use a newline character (\'\\n\') to separate each bullet point.' },
         clarity_and_style_feedback: { type: Type.STRING, description: 'A bulleted list of feedback on sentence structure, word choice, and academic tone. Use a newline character (\'\\n\') to separate each bullet point.' },
         improvement_suggestions: { type: Type.ARRAY, items: writingSuggestionSchema },
@@ -945,9 +1166,26 @@ const academicFeedbackSchema = {
 };
 
 export const getAcademicWritingFeedback = async (topic: string, text: string): Promise<AcademicFeedback> => {
+    const educationalRefusal = `I cannot write your assignment for you. My purpose is to help you improve your own writing skills, and directly asking an AI to do your work can be considered academic misconduct.
+
+To get helpful feedback, please provide a draft of your own writing.
+
+Here are some examples of how to ask for help effectively:
+
+Instead of asking:
+- "Write an essay about the benefits of renewable energy."
+
+Try asking for feedback on your own work:
+- "Here is my introductory paragraph about renewable energy. Is my thesis statement clear?"
+- "Can you check this paragraph for clarity and academic tone?"
+- "I've written a draft. Can you give me feedback on its structure and argument?"
+
+Please provide your own draft, and I'll be happy to help you improve it.`;
+
     const prompt = `You are an expert academic tutor specializing in British English. Your purpose is to TEACH users how to improve their academic writing, NOT to rewrite their work for them.
 
-GUARDRAIL: If the user's text is extremely short (less than 20 words), is just a list of keywords, or directly asks you to write the assignment, you MUST refuse. In your refusal, you must set 'overall_assessment' to 'I cannot write your assignment for you. My purpose is to help you improve your own work. Please provide a draft of your writing, and I will give you constructive feedback.' and leave all other fields as empty strings or arrays.
+GUARDRAIL: If the user's text is extremely short (less than 20 words), is just a list of keywords, or directly asks you to write the assignment, you MUST refuse. In your refusal, set 'overall_assessment' to the following educational message, and leave all other JSON fields as empty strings or arrays.
+Educational Refusal Message: "${educationalRefusal}"
 
 For a valid user submission, your task is to analyze their text and provide comprehensive, constructive feedback.
 

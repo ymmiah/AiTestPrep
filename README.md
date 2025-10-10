@@ -66,6 +66,11 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
 ---
 ## 🔄 Changelog
 
+**October 10, 2025:**
+
+-   **Fix:** Resolved a console error in the text-to-speech engine where deliberate interruptions (e.g., user starts speaking) were being incorrectly logged as errors. The system now gracefully handles these expected interruptions, resulting in a cleaner console output during simulations.
+-   **Enhancement:** Increased the variety of questions in the A2 Mock Exam by adding several new randomized topic modules (e.g., Shopping, Transport, Daily Routine). This ensures each test is more unique and less repetitive.
+
 **October 9, 2025:**
 
 -   **Feature:** Introduced a unified "My Profile" page to consolidate progress across all learning modules (A2, IELTS, Academic).
