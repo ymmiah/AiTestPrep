@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AnswerAnalysis, TopicQA } from '../types';
 import { analyzeUserAnswer, generatePersonalizedTopicQa } from '../services/geminiService';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { SunIcon, HeartIcon, MapPinIcon, UserGroupIcon, ShoppingBagIcon, CalendarDaysIcon, MicrophoneIcon, SparklesIcon, CheckCircleIcon, LightbulbIcon } from './IconComponents';
+import { SunIcon, HeartIcon, MapPinIcon, UserGroupIcon, ShoppingBagIcon, CalendarDaysIcon, MicrophoneIcon, SparklesIcon, CheckCircleIcon, LightbulbIcon, TicketIcon, BeakerIcon, HomeIcon, PhoneIcon } from './IconComponents';
 
 interface TopicModule {
   topic: string;
@@ -15,25 +15,12 @@ interface TopicModule {
 
 const practiceModules: TopicModule[] = [
   {
-    topic: 'Directions',
-    icon: MapPinIcon,
-    isPersonalized: true,
-    promptText: 'Want more practice? Enter a real place near you (e.g., "the post office", "Sainsbury\'s") to get custom AI questions.',
-    inputPlaceholder: 'e.g., the local park',
-    questions: [
-      { question: "How do you get to the nearest grocery shop from your home?", answer: "When I come out from my home, I take a right. Then I go a few hundred yards and take another right. After a two-minute walk, I cross the road, and the grocery shop is right there." },
-      { question: "Can you tell me how to get to the pharmacy?", answer: "The pharmacy is in the same walking direction. I follow the same path, but I don't need to cross the road. It is on my right-hand side, just before the traffic lights." },
-      { question: "How do you travel to the city centre?", answer: "To go to the city centre, I walk to the bus stop near my house. It takes about five minutes. I take the number 12 bus, and it goes directly to the city centre. The journey takes about twenty minutes." },
-      { question: "Is there a park near your house? How do you get there?", answer: "Yes, there is a lovely park nearby. I turn left from my front door and walk straight for about ten minutes. I pass a school on my left, and the park entrance is just after that. It's very easy to find." }
-    ]
-  },
-  {
-    topic: 'Weather',
-    icon: SunIcon,
+    topic: 'Family',
+    icon: UserGroupIcon,
     isPersonalized: false,
     questions: [
-        { question: 'What is the weather like today?', answer: 'It is sunny and warm today. There isn\'t a cloud in the sky. It is a beautiful day.' },
-        { question: 'What is your favourite type of weather?', answer: 'I like when it is warm and sunny because I can go outside and enjoy a walk in the park. I do not like the rain very much.' }
+        { question: 'Can you tell me about your family?', answer: 'Yes, of course. I have a small family. It is just my husband and me. We live together in a flat. My parents live in another city, but we visit them often.' },
+        { question: 'What do you like to do with your family?', answer: 'I like to cook with my husband on the weekends. We also enjoy watching movies together. When we visit my parents, we often go for a walk.' }
     ]
   },
   {
@@ -46,12 +33,12 @@ const practiceModules: TopicModule[] = [
     ]
   },
   {
-    topic: 'Family',
-    icon: UserGroupIcon,
+    topic: 'Daily Routine',
+    icon: CalendarDaysIcon,
     isPersonalized: false,
     questions: [
-        { question: 'Can you tell me about your family?', answer: 'Yes, of course. I have a small family. It is just my husband and me. We live together in a flat. My parents live in another city, but we visit them often.' },
-        { question: 'What do you like to do with your family?', answer: 'I like to cook with my husband on the weekends. We also enjoy watching movies together. When we visit my parents, we often go for a walk.' }
+        { question: 'What do you usually do in the morning?', answer: 'In the morning, I usually wake up at 7 AM. I have a shower, get dressed, and then I have breakfast. I usually have toast and a cup of tea.' },
+        { question: 'What time do you usually go to bed?', answer: 'I usually go to bed at about 11 PM. Before I go to sleep, I like to read a book for about 30 minutes. It helps me to relax.' }
     ]
   },
   {
@@ -63,13 +50,60 @@ const practiceModules: TopicModule[] = [
         { question: 'Do you like cooking?', answer: 'Yes, I enjoy cooking. I usually cook dinner every day. My favourite thing to make is pasta with a vegetable sauce.' }
     ]
   },
-  {
-    topic: 'Daily Routine',
-    icon: CalendarDaysIcon,
+   {
+    topic: 'Weather',
+    icon: SunIcon,
     isPersonalized: false,
     questions: [
-        { question: 'What do you usually do in the morning?', answer: 'In the morning, I usually wake up at 7 AM. I have a shower, get dressed, and then I have breakfast. I usually have toast and a cup of tea.' },
-        { question: 'What time do you usually go to bed?', answer: 'I usually go to bed at about 11 PM. Before I go to sleep, I like to read a book for about 30 minutes. It helps me to relax.' }
+        { question: 'What is the weather like today?', answer: 'It is sunny and warm today. There isn\'t a cloud in the sky. It is a beautiful day.' },
+        { question: 'What is your favourite type of weather?', answer: 'I like when it is warm and sunny because I can go outside and enjoy a walk in the park. I do not like the rain very much.' }
+    ]
+  },
+  {
+    topic: 'Transport',
+    icon: TicketIcon,
+    isPersonalized: false,
+    questions: [
+      { question: "How do you usually travel around your city?", answer: "I usually travel by bus. The bus stop is very close to my house, and it is very convenient. Sometimes, if I am in a hurry, I take a taxi." },
+      { question: "What is public transport like where you live?", answer: "The public transport is quite good. The buses are regular, but they can be crowded in the morning. We also have a train station, which is useful for longer journeys." },
+    ]
+  },
+  {
+    topic: 'Directions',
+    icon: MapPinIcon,
+    isPersonalized: true,
+    promptText: 'Want more practice? Enter a real place near you (e.g., "the post office", "Sainsbury\'s") to get custom AI questions.',
+    inputPlaceholder: 'e.g., the local park',
+    questions: [
+      { question: "How do you get to the nearest grocery shop from your home?", answer: "When I come out from my home, I take a right. Then I go a few hundred yards and take another right. After a two-minute walk, I cross the road, and the grocery shop is right there." },
+      { question: "Is there a park near your house? How do you get there?", answer: "Yes, there is a lovely park nearby. I turn left from my front door and walk straight for about ten minutes. I pass a school on my left, and the park entrance is just after that. It's very easy to find." }
+    ]
+  },
+  {
+    topic: 'Doctor\'s Appointment',
+    icon: BeakerIcon,
+    isPersonalized: false,
+    questions: [
+      { question: "Why might someone need to see a doctor?", answer: "Someone might see a doctor if they feel sick, like if they have a fever or a bad cough. Also, for regular check-ups or if they have an injury." },
+      { question: "How do you make a doctor's appointment in your country?", answer: "In my country, you usually have to call the doctor's office, which is called a surgery. You tell the receptionist your name and why you need to see the doctor, and she gives you a time." },
+    ]
+  },
+  {
+    topic: 'Visiting People',
+    icon: HomeIcon,
+    isPersonalized: false,
+    questions: [
+      { question: "Do you prefer to visit friends at their home, or meet them outside?", answer: "I prefer to visit my friends at their home. It is more comfortable and we can talk easily. Sometimes we cook a meal together, which is very nice." },
+      { question: "What do you usually do when you visit your family?", answer: "When I visit my family, we usually have a big meal together and talk for a long time. We like to catch up on each other's news. My mother is a very good cook." },
+    ]
+  },
+  {
+    topic: 'Customer Service',
+    icon: PhoneIcon,
+    isPersonalized: false,
+    questions: [
+      { question: "Imagine you bought a new kettle and it is broken. What would you do?", answer: "I would take the kettle back to the shop with the receipt. I would explain to the customer service desk that it does not work and ask for a refund or a new kettle." },
+      { question: "Have you ever called a company for help? Why?", answer: "Yes, I called my internet company last month because my internet was not working. I had to wait for a while, but the person on the phone was helpful and fixed the problem." },
     ]
   }
 ];
