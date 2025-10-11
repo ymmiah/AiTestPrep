@@ -101,7 +101,8 @@ const practiceModules: TopicModule[] = [
     isPersonalized: false,
     questions: [
         { question: 'Where did you go for your last holiday?', answer: 'For my last holiday, I went to Spain with my family. We stayed in a hotel near the beach. The weather was lovely and warm.' },
-        { question: 'What do you like to do when you are on holiday?', answer: 'When I am on holiday, I like to relax on the beach and swim in the sea. I also enjoy trying the local food and visiting interesting places.' }
+        { question: 'What do you like to do when you are on holiday?', answer: 'When I am on holiday, I like to relax on the beach and swim in the sea. I also enjoy trying the local food and visiting interesting places.' },
+        { question: 'Can you describe a memorable day from your holiday?', answer: 'Yes, one day we visited an old castle. The view from the top was amazing. I took many photos. It was a very special day for me.' }
     ]
   },
   {
