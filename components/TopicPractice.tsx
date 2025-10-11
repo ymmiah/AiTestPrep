@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AnswerAnalysis, TopicQA } from '../types';
 import { analyzeUserAnswer, generatePersonalizedTopicQa } from '../services/geminiService';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { SunIcon, HeartIcon, MapPinIcon, UserGroupIcon, ShoppingBagIcon, CalendarDaysIcon, MicrophoneIcon, SparklesIcon, CheckCircleIcon, LightbulbIcon, TicketIcon, BeakerIcon, HomeIcon, PhoneIcon } from './IconComponents';
+import { SunIcon, HeartIcon, MapPinIcon, UserGroupIcon, ShoppingBagIcon, CalendarDaysIcon, MicrophoneIcon, SparklesIcon, CheckCircleIcon, LightbulbIcon, TicketIcon, BeakerIcon, HomeIcon, PhoneIcon, PhotoIcon, AcademicCapIcon, TrophyIcon, SpeakerWaveIcon, BookOpenIcon } from './IconComponents';
 
 interface TopicModule {
   topic: string;
@@ -25,7 +25,7 @@ const practiceModules: TopicModule[] = [
   },
   {
     topic: 'Hobbies',
-    icon: HeartIcon,
+    icon: SparklesIcon,
     isPersonalized: false,
     questions: [
         { question: 'What do you do in your free time?', answer: 'In my free time, I enjoy reading books and listening to music. It is very relaxing. Sometimes, I also go for a walk if the weather is nice.' },
@@ -43,7 +43,7 @@ const practiceModules: TopicModule[] = [
   },
   {
     topic: 'Food',
-    icon: ShoppingBagIcon,
+    icon: HeartIcon,
     isPersonalized: false,
     questions: [
         { question: 'What is your favourite food?', answer: 'My favourite food is pizza. I especially like it with cheese and tomato. I often eat it on Friday evenings with my family.' },
@@ -66,17 +66,6 @@ const practiceModules: TopicModule[] = [
     questions: [
       { question: "How do you usually travel around your city?", answer: "I usually travel by bus. The bus stop is very close to my house, and it is very convenient. Sometimes, if I am in a hurry, I take a taxi." },
       { question: "What is public transport like where you live?", answer: "The public transport is quite good. The buses are regular, but they can be crowded in the morning. We also have a train station, which is useful for longer journeys." },
-    ]
-  },
-  {
-    topic: 'Directions',
-    icon: MapPinIcon,
-    isPersonalized: true,
-    promptText: 'Want more practice? Enter a real place near you (e.g., "the post office", "Sainsbury\'s") to get custom AI questions.',
-    inputPlaceholder: 'e.g., the local park',
-    questions: [
-      { question: "How do you get to the nearest grocery shop from your home?", answer: "When I come out from my home, I take a right. Then I go a few hundred yards and take another right. After a two-minute walk, I cross the road, and the grocery shop is right there." },
-      { question: "Is there a park near your house? How do you get there?", answer: "Yes, there is a lovely park nearby. I turn left from my front door and walk straight for about ten minutes. I pass a school on my left, and the park entrance is just after that. It's very easy to find." }
     ]
   },
   {
@@ -105,7 +94,459 @@ const practiceModules: TopicModule[] = [
       { question: "Imagine you bought a new kettle and it is broken. What would you do?", answer: "I would take the kettle back to the shop with the receipt. I would explain to the customer service desk that it does not work and ask for a refund or a new kettle." },
       { question: "Have you ever called a company for help? Why?", answer: "Yes, I called my internet company last month because my internet was not working. I had to wait for a while, but the person on the phone was helpful and fixed the problem." },
     ]
-  }
+  },
+  {
+    topic: 'Holidays & Travel',
+    icon: PhotoIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Where did you go for your last holiday?', answer: 'For my last holiday, I went to Spain with my family. We stayed in a hotel near the beach. The weather was lovely and warm.' },
+        { question: 'What do you like to do when you are on holiday?', answer: 'When I am on holiday, I like to relax on the beach and swim in the sea. I also enjoy trying the local food and visiting interesting places.' }
+    ]
+  },
+  {
+    topic: 'Work & Jobs',
+    icon: AcademicCapIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you have a job? What do you do?', answer: 'Yes, I work in a shop. I am a sales assistant. I help customers and I work at the cash desk.' },
+        { question: 'What do you like about your job?', answer: 'I like my job because I enjoy talking to people. My colleagues are also very friendly, which is nice.' }
+    ]
+  },
+  {
+    topic: 'School & Studies',
+    icon: AcademicCapIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Are you a student?', answer: 'Yes, I am. I am studying English at a language school. I have classes three times a week.' },
+        { question: 'What is your favourite subject?', answer: 'My favourite subject is speaking because I like to practice talking with my classmates and the teacher. It is difficult but fun.' }
+    ]
+  },
+  {
+    topic: 'Your Home',
+    icon: HomeIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you live in a house or a flat?', answer: 'I live in a flat on the second floor. It is not very big, but it is comfortable. It has two bedrooms, a living room, a kitchen, and a bathroom.' },
+        { question: 'What is your favourite room in your home?', answer: 'My favourite room is the living room. It has a comfortable sofa and a big window, so it is very bright. I like to relax there in the evening.' }
+    ]
+  },
+  {
+    topic: 'Hometown',
+    icon: MapPinIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Can you describe your hometown?', answer: 'My hometown is a small city. It has a beautiful old centre with a big market square. There are many shops and cafes, and there is also a nice park.' },
+        { question: 'What is your favourite place in your hometown?', answer: 'My favourite place is the park. It is very big and has a lovely lake. I often go there for a walk on weekends.' }
+    ]
+  },
+  {
+    topic: 'Shopping',
+    icon: ShoppingBagIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you enjoy going shopping?', answer: 'Yes, I enjoy shopping, especially for clothes. I like to go to the big shopping centre in my city on Saturdays.' },
+        { question: 'What kind of things do you usually buy?', answer: 'I usually buy food from the supermarket every week. Sometimes, I buy new clothes or a book if I see something I like.' }
+    ]
+  },
+  {
+    topic: 'Sports',
+    icon: TrophyIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you play any sports?', answer: 'I don\'t play in a team, but I like to play football with my friends in the park. I also go swimming once a week.' },
+        { question: 'What is a popular sport in your country?', answer: 'In my country, football is very popular. Many people watch the matches on TV and support their favourite team.' }
+    ]
+  },
+  {
+    topic: 'Films & TV',
+    icon: TicketIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you like watching films?', answer: 'Yes, I love watching films. I usually watch them at home on my TV, but sometimes I go to the cinema with my friends.' },
+        { question: 'What kind of films do you like?', answer: 'I like comedies because they make me laugh. I also enjoy action films because they are exciting.' }
+    ]
+  },
+  {
+    topic: 'Birthdays',
+    icon: SparklesIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'How do you usually celebrate your birthday?', answer: 'I usually have a small party at home with my family and a few close friends. We eat cake, and I get some presents.' },
+        { question: 'What did you do for your last birthday?', answer: 'For my last birthday, I went out for dinner at a nice Italian restaurant with my husband. The food was delicious.' }
+    ]
+  },
+  {
+    topic: 'Technology',
+    icon: PhoneIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'How often do you use the internet?', answer: 'I use the internet every day. I use it on my phone and my computer to check emails, read the news, and talk to my friends.' },
+        { question: 'What do you use your mobile phone for?', answer: 'I use my mobile phone for many things. I make calls, send text messages, and use social media. I also use it to take photos and listen to music.' }
+    ]
+  },
+  {
+    topic: 'Animals & Pets',
+    icon: HeartIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you have any pets?', answer: 'Yes, I have a cat. Her name is Luna. She is very playful and I love her very much.' },
+        { question: 'What is your favourite animal?', answer: 'My favourite animal is a dog because they are friendly and loyal. I would like to have a dog one day.' }
+    ]
+  },
+  {
+    topic: 'Music',
+    icon: SpeakerWaveIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you like listening to music?', answer: 'Yes, I listen to music every day. It helps me to relax. I usually listen on my phone with headphones.' },
+        { question: 'What kind of music do you like?', answer: 'I like listening to pop music because it is cheerful. I also like classical music when I am studying.' }
+    ]
+  },
+  {
+    topic: 'Books & Reading',
+    icon: BookOpenIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'Do you enjoy reading?', answer: 'Yes, I enjoy reading very much. I try to read for a little bit every night before I go to sleep. It is a good way to relax.' },
+        { question: 'What kind of books do you read?', answer: 'I like to read stories, which are called novels. I especially like mystery stories because they are exciting and I want to know what happens in the end.' }
+    ]
+  },
+  {
+    topic: 'Weekends',
+    icon: CalendarDaysIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'What do you usually do on the weekend?', answer: 'On the weekend, I like to relax. On Saturday, I often meet my friends for coffee. On Sunday, I clean my flat and prepare for the next week.' },
+        { question: 'How is your weekend different from your weekday?', answer: 'During the week, I am very busy with work. The weekend is different because I have more free time. I can sleep a little longer in the morning.' }
+    ]
+  },
+  {
+    topic: 'Clothes',
+    icon: ShoppingBagIcon,
+    isPersonalized: false,
+    questions: [
+        { question: 'What kind of clothes do you usually wear?', answer: 'I usually wear comfortable clothes like jeans and a T-shirt. If the weather is cold, I wear a warm jumper or a coat.' },
+        { question: 'What do you wear for a special occasion, like a party?', answer: 'For a special occasion, I like to dress up. I might wear a nice dress or a smart shirt and trousers. It is nice to wear something different.' }
+    ]
+  },
+  {
+    topic: 'Friends',
+    icon: UserGroupIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Tell me about your best friend.", answer: "My best friend is called Maria. We have been friends for many years. She is very kind and funny, and we like to go shopping together." },
+        { question: "What do you like to do with your friends?", answer: "With my friends, I like to go to the cinema or for a coffee. Sometimes we just stay at home and watch TV. It's always nice to spend time with them." }
+    ]
+  },
+  {
+    topic: 'Your Country',
+    icon: MapPinIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is your country famous for?", answer: "My country is famous for its beautiful mountains and its delicious food. Many tourists visit every year to enjoy the nature and try our traditional dishes." },
+        { question: "What is the most beautiful place in your country?", answer: "I think the most beautiful place is the coast. There are long sandy beaches and the water is very blue. It is a wonderful place to relax." }
+    ]
+  },
+  {
+    topic: 'Restaurants',
+    icon: HeartIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you like eating in restaurants?", answer: "Yes, I enjoy eating in restaurants for special occasions, like a birthday. It is nice to try different food and not have to cook at home." },
+        { question: "What kind of restaurants do you like?", answer: "I really like Italian restaurants because my favourite food is pasta and pizza. I also like restaurants that serve food from my country." }
+    ]
+  },
+  {
+    topic: 'Health & Fitness',
+    icon: HeartIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What do you do to stay healthy?", answer: "To stay healthy, I try to eat a lot of fruit and vegetables. I also go for a walk every day, and I drink a lot of water. It is very important." },
+        { question: "Is it important to eat healthy food? Why?", answer: "Yes, I think it is very important. Healthy food gives you energy and helps you to not get sick. It makes you feel good." }
+    ]
+  },
+  {
+    topic: 'The Future',
+    icon: SparklesIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What are your plans for next year?", answer: "Next year, I plan to continue studying English. I also want to find a new job. I hope it will be a good year for me." },
+        { question: "Where do you see yourself in five years?", answer: "In five years, I hope to have a good job and maybe live in a bigger house. I also want to travel to a new country." }
+    ]
+  },
+  {
+    topic: 'Learning English',
+    icon: AcademicCapIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Why are you learning English?", answer: "I am learning English because it is important for my job. It is also a very useful language for travelling and meeting new people from different countries." },
+        { question: "What is the most difficult part of learning English for you?", answer: "For me, the most difficult part is the grammar. There are many rules, and sometimes it is confusing. I also need to practice my pronunciation." }
+    ]
+  },
+  {
+    topic: 'Festivals & Celebrations',
+    icon: TicketIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is an important festival in your country?", answer: "A very important festival in my country is the New Year celebration. It is a big event and everyone is very happy." },
+        { question: "How do you celebrate it?", answer: "We celebrate with a big family dinner. We eat special food, and at midnight, we watch fireworks. It is a very exciting time." }
+    ]
+  },
+  {
+    topic: 'Your Neighbours',
+    icon: HomeIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you know your neighbours?", answer: "Yes, I know my neighbours. They are a nice family with two small children. We sometimes say hello in the morning when we leave for work." },
+        { question: "Is it important to have good neighbours?", answer: "Yes, I think it is very important. Good neighbours can help you if you have a problem. It is nice to live in a friendly place." }
+    ]
+  },
+  {
+    topic: 'Seasons',
+    icon: SunIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is your favourite season? Why?", answer: "My favourite season is summer. I like it because the weather is warm and sunny, and the days are long. I can spend more time outside." },
+        { question: "What do you usually do in the winter?", answer: "In the winter, it is often cold, so I spend more time at home. I like to read books and watch films. Sometimes, I go for a short walk if it is not too cold." }
+    ]
+  },
+  {
+    topic: 'Your Favourite Place',
+    icon: MapPinIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is your favourite place to go in your free time?", answer: "My favourite place to go is a small cafe in the city centre. It is very quiet and they have delicious coffee and cakes." },
+        { question: "Can you describe this place to me?", answer: "It has big windows, comfortable chairs, and friendly staff. I like to go there with a book and relax for an hour. It's a very peaceful place." }
+    ]
+  },
+  {
+    topic: 'Money',
+    icon: ShoppingBagIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Is it important to save money? Why?", answer: "Yes, it is very important to save money. You can use it for big things in the future, like buying a house, or for an emergency." },
+        { question: "What would you buy if you won a lot of money?", answer: "If I won a lot of money, I would buy a beautiful house for my family. I would also travel around the world and visit many countries." }
+    ]
+  },
+  {
+    topic: 'News & Media',
+    icon: BookOpenIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "How do you get the news?", answer: "I usually get the news from the internet. I read news websites on my phone in the morning. Sometimes I also watch the news on TV in the evening." },
+        { question: "Do you think it's important to follow the news?", answer: "Yes, I think it is important because you know what is happening in your country and around the world. It is good to be informed." }
+    ]
+  },
+  {
+    topic: 'Going Out',
+    icon: TicketIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What do you like to do when you go out in the evening?", answer: "In the evening, I sometimes go out for dinner with my friends. We like to try different restaurants. After dinner, we might go for a walk." },
+        { question: "Do you prefer going to the cinema or a concert?", answer: "I prefer going to the cinema because I love watching films on a big screen. I find concerts are often too loud for me." }
+    ]
+  },
+  {
+    topic: 'Your Childhood',
+    icon: SparklesIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Where did you grow up?", answer: "I grew up in a small town by the sea. It was a lovely place to be a child. I spent a lot of time playing on the beach with my friends." },
+        { question: "What was your favourite game when you were a child?", answer: "My favourite game was hide-and-seek. I used to play it with my brother and our friends in the park. It was very exciting." }
+    ]
+  },
+  {
+    topic: 'The Internet',
+    icon: PhoneIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "How has the internet changed your life?", answer: "The internet has changed my life a lot. It is very easy to find information for my studies and to stay in contact with my family who live far away." },
+        { question: "What websites do you visit often?", answer: "I often visit websites for news and weather. I also use social media websites like Facebook to see what my friends are doing." }
+    ]
+  },
+  {
+    topic: 'Cooking',
+    icon: HeartIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Can you cook? What can you make?", answer: "Yes, I can cook. I'm not a chef, but I can make simple meals. I often cook pasta with tomato sauce, or I make chicken with rice and vegetables." },
+        { question: "What is a traditional dish from your country?", answer: "A traditional dish from my country is very delicious. It is made with rice, chicken, and many spices. We usually eat it on special occasions." }
+    ]
+  },
+  {
+    topic: 'Flowers & Plants',
+    icon: SunIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you like flowers? What is your favourite flower?", answer: "Yes, I love flowers. They are beautiful and smell nice. My favourite flower is the rose because it is very elegant and comes in many colours." },
+        { question: "Do you have any plants in your home?", answer: "Yes, I have a few small plants on my windowsill. They make the room look nice and green. I have to remember to water them every week." }
+    ]
+  },
+  {
+    topic: 'Your Bedroom',
+    icon: HomeIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Can you describe your bedroom?", answer: "My bedroom is not very big, but it is very cosy. There is a bed, a wardrobe for my clothes, and a small desk next to the window. The walls are a light blue colour." },
+        { question: "What is your favourite thing in your bedroom?", answer: "My favourite thing is my bed. It is very comfortable and I love to read in my bed before I go to sleep. It is my place to relax." }
+    ]
+  },
+  {
+    topic: 'Public Holidays',
+    icon: CalendarDaysIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is a big public holiday in your country?", answer: "A big public holiday is Independence Day. On this day, we celebrate our country's history. Most people do not work on this day." },
+        { question: "What do people usually do on that day?", answer: "People usually spend time with their families. Many cities have parades and fireworks in the evening. It is a very happy and patriotic day." }
+    ]
+  },
+  {
+    topic: 'Your Last Vacation',
+    icon: PhotoIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Tell me about your last vacation.", answer: "My last vacation was a trip to the mountains. I went with my family for a few days. We stayed in a small hotel and went hiking during the day." },
+        { question: "What was the best part of your trip?", answer: "The best part of the trip was the beautiful view from the top of the mountain. The air was very fresh and it was very quiet. It was wonderful." }
+    ]
+  },
+  {
+    topic: 'Future Travel',
+    icon: MapPinIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Which country would you like to visit in the future? Why?", answer: "I would love to visit Italy in the future. I want to see the historical places in Rome and I also want to eat real Italian pizza and pasta." },
+        { question: "Do you prefer to travel alone or with other people?", answer: "I prefer to travel with my family or friends. It is more fun to share the experience with someone and it is also safer." }
+    ]
+  },
+  {
+    topic: 'Weekdays',
+    icon: CalendarDaysIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is a typical Tuesday like for you?", answer: "On a typical Tuesday, I go to work in the morning. After work, I go to the gym for an hour. In the evening, I cook dinner and watch some TV." },
+        { question: "Which is your busiest day of the week?", answer: "My busiest day is usually Monday. I have a lot of emails to answer at work, and I have a meeting with my team. The day goes by very fast." }
+    ]
+  },
+  {
+    topic: 'Helping People',
+    icon: UserGroupIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you think it's important to help other people?", answer: "Yes, I think it is very important. When we help others, it makes us feel good, and it makes the world a better place. A small act of kindness can make a big difference." },
+        { question: "Tell me about a time you helped someone.", answer: "Last week, I saw an old lady who dropped her shopping bags. I helped her pick everything up. She was very happy and thanked me." }
+    ]
+  },
+  {
+    topic: 'Cars & Driving',
+    icon: TicketIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you know how to drive a car?", answer: "Yes, I can drive. I got my driving license five years ago. I have a small car that I use to go to work and to the supermarket." },
+        { question: "Do you prefer travelling by car or by public transport?", answer: "It depends. I prefer the car for shopping because it is easy to carry things. But for going to the city centre, I prefer the bus because parking is difficult and expensive." }
+    ]
+  },
+  {
+    topic: 'Art & Museums',
+    icon: PhotoIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you like visiting art galleries or museums?", answer: "I don't go very often, but I find museums interesting. I like history museums because you can learn about the past. Art galleries are nice but sometimes I don't understand the art." },
+        { question: "What kind of art do you like?", answer: "I like paintings of landscapes, with mountains, rivers and trees. I find them very beautiful and calming to look at. I have a nice painting of the sea in my living room." }
+    ]
+  },
+  {
+    topic: 'Being Happy',
+    icon: HeartIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What makes you happy?", answer: "Spending time with my family makes me very happy. Also, small things like a sunny day or a good cup of coffee can make me happy." },
+        { question: "What did you do recently that made you happy?", answer: "Last weekend, I went for a walk in the countryside with my husband. The weather was beautiful and it was very peaceful. It made me feel very happy and relaxed." }
+    ]
+  },
+  {
+    topic: 'Your City Centre',
+    icon: MapPinIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "What is the centre of your town or city like?", answer: "The city centre is very busy. There are many shops, restaurants, and offices. There is also a big square where people like to meet." },
+        { question: "What can you do there in the evening?", answer: "In the evening, you can go to the cinema, or have dinner in a restaurant. There are also many pubs and cafes that are open late. It is a lively place at night." }
+    ]
+  },
+  {
+    topic: 'Parties',
+    icon: SparklesIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "Do you enjoy going to parties?", answer: "I enjoy small parties with close friends and family. I don't like big, noisy parties very much. I prefer to have a nice conversation." },
+        { question: "Tell me about a party you went to recently.", answer: "Last month, I went to my friend's birthday party. It was at her house. We had some food, listened to music, and we all sang 'Happy Birthday' when she cut the cake." }
+    ]
+  },
+  {
+    topic: 'Gifts',
+    icon: ShoppingBagIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "When do people give gifts in your country?", answer: "In my country, people give gifts for birthdays, weddings, and at special festivals like Christmas or Eid. It is a way to show you care about someone." },
+        { question: "What is the best gift you have ever received?", answer: "The best gift I ever received was a watch from my parents for my 21st birthday. It is very special to me because it was a thoughtful gift." }
+    ]
+  },
+  {
+    topic: 'Your Phone',
+    icon: PhoneIcon,
+    isPersonalized: false,
+    questions: [
+        { question: "How important is your mobile phone to you?", answer: "My mobile phone is very important. I use it for everything - to call my family, to send messages to friends, and to check my emails for work." },
+        { question: "Do you think people use their phones too much?", answer: "Yes, sometimes I think so. You see people in restaurants looking at their phones and not talking to each other. It's a little sad." }
+    ]
+  },
+  {
+    topic: 'Languages',
+    icon: SpeakerWaveIcon,
+    isPersonalized: false,
+    questions: [
+      { question: 'How many languages can you speak?', answer: 'I can speak two languages. My first language is [your language], and I am learning English. It is difficult but I enjoy it.' },
+      { question: 'Do you think it is important to learn other languages?', answer: 'Yes, I think it is very important. It helps you understand other cultures and it is very useful when you travel to different countries.' },
+    ],
+  },
+  {
+    topic: 'Plans for the Weekend',
+    icon: CalendarDaysIcon,
+    isPersonalized: false,
+    questions: [
+      { question: 'What are your plans for this weekend?', answer: 'This weekend, I am going to visit my sister. We are planning to go shopping and then see a film at the cinema on Saturday.' },
+      { question: 'Do you prefer a busy weekend or a relaxing weekend?', answer: 'I usually prefer a relaxing weekend because my weekdays are very busy. I like to have time to rest, read a book, and just stay at home.' },
+    ],
+  },
+  {
+    topic: 'Your Favourite Room',
+    icon: HomeIcon,
+    isPersonalized: false,
+    questions: [
+      { question: 'What is your favourite room in your house?', answer: 'My favourite room is the kitchen. I love cooking, and my kitchen is very bright and has a big table where my family can eat together.' },
+      { question: 'How would you change your home if you could?', answer: 'If I could, I would like to have a bigger garden. I love plants and flowers, so it would be nice to have more space outside.' },
+    ],
+  },
+  {
+    topic: 'The News',
+    icon: BookOpenIcon,
+    isPersonalized: false,
+    questions: [
+      { question: 'Did you see the news today?', answer: 'Yes, I read some news online this morning. I read about the weather and also some news about my local area. I did not watch TV news.' },
+      { question: 'What kind of news interests you the most?', answer: 'I am most interested in news about science and technology. I like to learn about new discoveries. I find political news a bit boring.' },
+    ],
+  },
+  {
+    topic: 'Directions',
+    icon: MapPinIcon,
+    isPersonalized: true,
+    promptText: 'Want more practice? Enter a real place near you (e.g., "the post office", "Sainsbury\'s") to get custom AI questions.',
+    inputPlaceholder: 'e.g., the local park',
+    questions: [
+      { question: "How do you get to the nearest grocery shop from your home?", answer: "When I come out from my home, I take a right. Then I go a few hundred yards and take another right. After a two-minute walk, I cross the road, and the grocery shop is right there." },
+      { question: "Is there a park near your house? How do you get there?", answer: "Yes, there is a lovely park nearby. I turn left from my front door and walk straight for about ten minutes. I pass a school on my left, and the park entrance is just after that. It's very easy to find." }
+    ]
+  },
 ];
 
 const QuestionPractice: React.FC<{ qa: TopicQA; }> = ({ qa }) => {
