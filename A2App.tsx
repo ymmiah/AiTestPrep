@@ -14,6 +14,7 @@ import { View, Theme, Module, UserProfile } from './types';
 import PronunciationPractice from './components/PronunciationPractice';
 import ModuleLayout from './components/ModuleLayout';
 import { getUserProfile } from './services/geminiService';
+import { GitHubIcon } from './components/IconComponents';
 
 interface A2AppProps {
   onGoBack: () => void;
@@ -90,6 +91,17 @@ const A2App: React.FC<A2AppProps> = ({ onGoBack, onNavigateToModule, theme, setT
           >
             <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto w-full">
               {renderView()}
+               <footer className="w-full mt-12 py-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-center gap-4">
+                    <a href="https://github.com/Yasin-M-Miah/ai-language-test-prep-platform" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
+                        <GitHubIcon className="w-4 h-4" />
+                        <span>GitHub Repository</span>
+                    </a>
+                    <span>|</span>
+                    <span>Last updated: October 20, 2025</span>
+                </div>
+                <p className="mt-2">&copy; 2025 Powered by Yasin Mohammed Miah.</p>
+            </footer>
             </div>
           </ModuleLayout>
           

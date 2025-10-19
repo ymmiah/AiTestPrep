@@ -1,8 +1,9 @@
 
+
 import React from 'react';
 // FIX: The 'View' type is now imported from '../types' instead of '../A2App'.
 import { View, Module } from '../types';
-import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, AcademicCapIcon, CalendarDaysIcon, QuestionMarkCircleIcon, SparklesIcon, UserCircleIcon, TrophyIcon, ClipboardDocumentCheckIcon, SoundWaveIcon } from './IconComponents';
+import { HomeIcon, ChatBubbleIcon, CardStackIcon, HeadphonesIcon, AcademicCapIcon, CalendarDaysIcon, QuestionMarkCircleIcon, SparklesIcon, UserCircleIcon, TrophyIcon, ClipboardDocumentCheckIcon, SoundWaveIcon, GitHubIcon } from './IconComponents';
 
 interface SidebarProps {
   activeView: View;
@@ -103,8 +104,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, onNavigate
         </div>
       </nav>
       <footer className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
-        <p>&copy; 2025 Powered by Yasin Mohammed Miah.</p>
-      </footer>
+        <div className="flex flex-col items-center justify-center gap-2">
+            <a href="https://github.com/Yasin-M-Miah/ai-language-test-prep-platform" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
+                <GitHubIcon className="w-4 h-4" />
+                <span>GitHub Repository</span>
+            </a>
+            <span>Last updated: October 20, 2025</span>
+        </div>
+        <p className="mt-2">&copy; 2025 Powered by Yasin Mohammed Miah.</p>
+    </footer>
     </aside>
   );
 };

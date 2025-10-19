@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Badge, Theme } from '../types';
 import { updateUserName, updateUserProfile } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
-import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, BookOpenIcon, ArrowLeftIcon, ClipboardDocumentCheckIcon } from './IconComponents';
+import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, BookOpenIcon, ClipboardDocumentCheckIcon } from './IconComponents';
 import { useNotification } from '../contexts/NotificationContext';
 
 const iconMap: { [key in Badge['icon']]: React.FC<{ className?: string }> } = {
@@ -43,10 +43,9 @@ interface ProfileProps {
   setTheme: (theme: Theme) => void;
   userProfile: UserProfile | null;
   forceProfileRefetch: () => void;
-  onGoBack: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ theme, setTheme, userProfile: profile, forceProfileRefetch, onGoBack }) => {
+const Profile: React.FC<ProfileProps> = ({ theme, setTheme, userProfile: profile, forceProfileRefetch }) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [editingName, setEditingName] = useState('');
     const [isDevMode, setIsDevMode] = useState(false);
@@ -144,17 +143,6 @@ const Profile: React.FC<ProfileProps> = ({ theme, setTheme, userProfile: profile
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <header className="flex items-center gap-4">
-                 <button 
-                    onClick={onGoBack} 
-                    className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 active:bg-slate-300 dark:active:bg-slate-700 transition-colors"
-                    aria-label="Back"
-                >
-                    <ArrowLeftIcon className="w-6 h-6" />
-                </button>
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">My Profile</h1>
-            </header>
-
              <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                 <div className="text-center">
                     <img

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HeadphonesIcon, BookOpenIcon, PencilIcon, ChatBubbleIcon, ClipboardDocumentCheckIcon, AcademicCapIcon } from './IconComponents';
+import { HeadphonesIcon, BookOpenIcon, PencilIcon, ChatBubbleIcon, ClipboardDocumentCheckIcon, AcademicCapIcon, GitHubIcon } from './IconComponents';
 import ModuleLayout from './ModuleLayout';
 
 import IELTSListening from './ielts/IELTSListening';
@@ -130,9 +130,22 @@ const IELTSPrep: React.FC<IELTSPrepProps> = ({ onGoBack, theme, setTheme, onSele
         <ModuleLayout
             title={viewTitles[view]}
             onGoBack={view === 'dashboard' ? onGoBack : () => setView('dashboard')}
+            theme={theme}
+            setTheme={setTheme}
         >
             <div className="p-4 md:p-8">
                 {renderIELTSView()}
+                 <footer className="w-full mt-12 py-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-center gap-4">
+                        <a href="https://github.com/Yasin-M-Miah/ai-language-test-prep-platform" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
+                            <GitHubIcon className="w-4 h-4" />
+                            <span>GitHub Repository</span>
+                        </a>
+                        <span>|</span>
+                        <span>Last updated: October 20, 2025</span>
+                    </div>
+                    <p className="mt-2">&copy; 2025 Powered by Yasin Mohammed Miah.</p>
+                </footer>
             </div>
         </ModuleLayout>
     );

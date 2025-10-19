@@ -11,6 +11,7 @@ import ModuleLayout from './components/ModuleLayout';
 import { NotificationContext } from './contexts/NotificationContext';
 import NotificationContainer from './components/NotificationContainer';
 import SkeletonLoader from './components/SkeletonLoader';
+import { GitHubIcon } from './components/IconComponents';
 
 interface AppState {
     module: Module;
@@ -149,19 +150,27 @@ const App: React.FC = () => {
                         />;
             case 'profile':
                  return (
-                    <div className="flex-1 flex flex-col h-full">
-                        <main className="flex-1 overflow-y-auto">
-                           <div className="p-4 md:p-8 max-w-4xl mx-auto w-full">
-                                <Profile 
-                                    theme={theme} 
-                                    setTheme={setTheme}
-                                    userProfile={userProfile}
-                                    forceProfileRefetch={forceProfileRefetch}
-                                    onGoBack={() => setCurrentModule({ module: 'landing' })}
-                                 />
-                            </div>
-                        </main>
-                    </div>
+                    <ModuleLayout title="My Profile" onGoBack={() => setCurrentModule({ module: 'landing' })} theme={theme} setTheme={setTheme}>
+                       <div className="p-4 md:p-8 max-w-4xl mx-auto w-full">
+                            <Profile 
+                                theme={theme} 
+                                setTheme={setTheme}
+                                userProfile={userProfile}
+                                forceProfileRefetch={forceProfileRefetch}
+                             />
+                             <footer className="w-full mt-12 py-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
+                                <div className="flex items-center justify-center gap-4">
+                                    <a href="https://github.com/Yasin-M-Miah/ai-language-test-prep-platform" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
+                                        <GitHubIcon className="w-4 h-4" />
+                                        <span>GitHub Repository</span>
+                                    </a>
+                                    <span>|</span>
+                                    <span>Last updated: October 20, 2025</span>
+                                </div>
+                                <p className="mt-2">&copy; 2025 Powered by Yasin Mohammed Miah.</p>
+                            </footer>
+                        </div>
+                    </ModuleLayout>
                 );
             case 'landing':
             default:

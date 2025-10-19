@@ -71,6 +71,10 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
 ---
 ## 🔄 Changelog
 
+**October 20, 2025:**
+-   **Enhancement:** Added a consistent header and footer across all modules of the application for a more unified user experience.
+-   **Feature:** The new global footer includes a direct link to the project's GitHub repository and displays the date of the last update.
+
 **October 19, 2025:**
 -   **Feature:** Implemented a full, realistic **B1 GESE Grade 5 Mock Exam**.
     -   **Official Structure:** The test follows the official 10-minute, two-part format, starting with a 5-minute **Topic Phase** based on user-provided notes, followed by a 5-minute **Conversation Phase** with an AI examiner.
@@ -125,8 +129,8 @@ This project runs entirely in the browser with no build step required.
 **1. Clone the Repository**
 
 ```bash
-git clone https://github.com/your-username/ai-language-test-prep.git
-cd ai-language-test-prep
+git clone https://github.com/Yasin-M-Miah/ai-language-test-prep-platform.git
+cd ai-language-test-prep-platform
 ```
 
 **2. Set Up Your API Key**
