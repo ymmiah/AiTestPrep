@@ -129,8 +129,8 @@ This project runs entirely in the browser with no build step required.
 **1. Clone the Repository**
 
 ```bash
-git clone https://github.com/Yasin-M-Miah/ai-language-test-prep-platform.git
-cd ai-language-test-prep-platform
+git clone https://github.com/ymmiah/AiTestPrep.git
+cd AiTestPrep
 ```
 
 **2. Set Up Your API Key**

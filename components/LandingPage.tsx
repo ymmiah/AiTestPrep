@@ -102,7 +102,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectModule, theme, setThe
             
              <footer className="flex-shrink-0 py-6 px-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-transparent border-t border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-center gap-4">
-                    <a href="https://github.com/Yasin-M-Miah/ai-language-test-prep-platform" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
+                    <a href="https://github.com/ymmiah/AiTestPrep" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-indigo-500 transition-colors">
                         <GitHubIcon className="w-4 h-4" />
                         <span>GitHub Repository</span>
                     </a>
