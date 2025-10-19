@@ -1,4 +1,3 @@
-
 # AI Language Test Prep Platform
 
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
@@ -15,6 +14,7 @@ A comprehensive, AI-powered web application designed to help users prepare for m
 The AI Language Test Prep Platform provides an immersive and interactive learning experience, leveraging the power of Google Gemini to deliver personalized coaching. The application is structured into distinct, self-contained modules for different exams, allowing for easy expansion and focused learning paths.
 
 -   **UK Spouse Visa A2 English Test Prep:** The flagship module featuring a voice-to-voice chat with an AI examiner, providing instant, targeted feedback on performance.
+-   **B1 GESE Grade 5 Test Prep:** A dedicated module for the 10-minute speaking and listening test required for visa extensions and settlement in the UK.
 -   **IELTS Exam Preparation:** A comprehensive suite of tools to help users prepare for all four sections of the IELTS Academic & General Training tests.
 -   **Academic Learning:** An ethical AI-powered assistant designed to teach and improve academic writing skills, not just correct them.
 
@@ -36,6 +36,11 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
     -   **Topic & Pronunciation Practice:** Isolate and improve specific speaking skills with targeted exercises and AI analysis.
     -   **Interactive Vocabulary Builder:** Learn new words through a story-based game that uses spaced repetition principles.
     -   **Listening & Grammar Hubs:** Complete exercises with mock audio and test your knowledge with interactive quizzes.
+
+### 🇬🇧 B1 GESE Grade 5 Test Prep (New!)
+-   **Structured Practice:** Modules for both the Topic Phase and Conversation Phase of the exam.
+-   **Full Mock Exam:** A full, timed simulation of the 10-minute B1 test with a comprehensive final assessment.
+-   **AI-Powered Feedback:** Get detailed guidance on your performance to ensure you meet the B1 standard for your visa extension.
 
 ### 🎓 IELTS Exam Preparation
 
@@ -65,6 +70,18 @@ The AI Language Test Prep Platform provides an immersive and interactive learnin
 
 ---
 ## 🔄 Changelog
+
+**October 19, 2025:**
+-   **Feature:** Implemented a full, realistic **B1 GESE Grade 5 Mock Exam**.
+    -   **Official Structure:** The test follows the official 10-minute, two-part format, starting with a 5-minute **Topic Phase** based on user-provided notes, followed by a 5-minute **Conversation Phase** with an AI examiner.
+    -   **Timed Experience:** A 10-minute countdown timer simulates real exam conditions and helps users practice time management.
+    -   **Realistic Setup & Interaction:** Users begin by setting up their chosen topic and key points, just like in the real test. The AI acts strictly as an examiner, asking questions without providing feedback until the end.
+    -   **Comprehensive Final Assessment:** After the test, users receive a detailed performance review, including an overall outcome (Clear Pass, Pass, or Fail) and specific feedback on communicative effectiveness, language control, and pronunciation.
+    -   **Transcript Review:** A full transcript of the test is available for review.
+
+**October 11, 2025:**
+-   **Feature:** Added the new **B1 GESE Grade 5 Test Prep** module to prepare users for visa extension exams. The module includes placeholders for Topic Phase, Conversation Phase, and a full mock test.
+-   **Enhancement:** Massively expanded the number of practice topics available in the A2 "Topic Practice" module from 5 to over 40, covering a comprehensive range of everyday subjects to improve conversational breadth.
 
 **October 10, 2025:**
 
@@ -192,8 +209,9 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## 🗺️ Roadmap & Future Enhancements
 
--   [ ] **Complete IELTS Module:**
-    -   [ ] Full Mock Test simulation.
+-   [ ] **Complete B1 & IELTS Modules:**
+    -   [ ] Implement Topic Phase, Conversation Phase, and Mock Test for B1 GESE Grade 5.
+    -   [ ] Full Mock Test simulation for IELTS.
 -   [ ] **User Accounts & Database:**
     -   Implement a backend (e.g., Firebase, Supabase) for user authentication and data persistence across devices.
 -   [ ] **Vocabulary SRS:**

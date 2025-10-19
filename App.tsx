@@ -4,6 +4,7 @@ import { View, Theme, Module, UserProfile, Notification, NotificationAction } fr
 import LandingPage from './components/LandingPage';
 import IELTSPrep from './components/IELTSPrep';
 import AcademicPrep from './AcademicPrep';
+import B1Prep from './B1Prep';
 import { getUserProfile, updateUserProfile } from './services/geminiService';
 import Profile from './components/Profile';
 import ModuleLayout from './components/ModuleLayout';
@@ -44,7 +45,7 @@ const App: React.FC = () => {
                  // In case of error, set a default profile to avoid app crash
                 setUserProfile({
                     name: '', points: 0, badges: [], referenceNumber: null, theme: 'light',
-                    progress: { a2: {} as any, ielts: {} as any, academic: {} as any }
+                    progress: { a2: {} as any, ielts: {} as any, academic: {} as any, b1: {} as any }
                 });
             } finally {
                 setIsLoadingProfile(false);
@@ -126,6 +127,12 @@ const App: React.FC = () => {
                             initialView={currentModule.initialView}
                             userProfile={userProfile}
                             forceProfileRefetch={forceProfileRefetch}
+                        />;
+            case 'b1':
+                return <B1Prep 
+                            onGoBack={() => setCurrentModule({ module: 'landing' })} 
+                            theme={theme} 
+                            setTheme={setTheme} 
                         />;
             case 'ielts':
                 return <IELTSPrep 

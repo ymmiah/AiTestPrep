@@ -1,4 +1,4 @@
-import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis, AcademicFeedback, WritingSuggestion, Theme, AcademicSource } from '../types';
+import { Feedback, StudyPlan, TopicQA, VocabularyWord, ListeningExercise, CommonMistake, GrammarQuiz, UserProfile, LeaderboardEntry, GeminiResponse, Message, Badge, FinalAssessment, TranscriptAnalysis, PronunciationFeedback, VocabularyStory, IELTSWritingFeedback, IELTSListeningExercise, IELTSReadingExercise, IELTSSpeakingScript, IELTSSpeakingFeedback, AnswerAnalysis, AcademicFeedback, WritingSuggestion, Theme, AcademicSource, B1FinalAssessment } from '../types';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from '@google/genai';
 
 
@@ -77,6 +77,11 @@ const getDefaultProfile = (): UserProfile => ({
       avgPronunciationScore: 0,
       listeningScore: 0,
     },
+    b1: {
+      sessionsCompleted: 0,
+      avgScore: 0,
+      mockTestsCompleted: 0,
+    },
     ielts: {
       writingTasksCompleted: 0,
       avgWritingBand: 0,
@@ -123,6 +128,7 @@ export const getUserProfile = async (): Promise<UserProfile> => {
                   a2: { ...defaultProfile.progress.a2, ...(parsed.progress?.a2 || {}) },
                   ielts: { ...defaultProfile.progress.ielts, ...(parsed.progress?.ielts || {}) },
                   academic: { ...defaultProfile.progress.academic, ...(parsed.progress?.academic || {}) },
+                  b1: { ...defaultProfile.progress.b1, ...(parsed.progress?.b1 || {}) },
               },
               conversationHistory: parsed.conversationHistory || {},
               badges: parsed.badges || [],
@@ -280,7 +286,14 @@ const systemInstructions: { [key: string]: string } = {
     coffee: "You are a friendly barista in a coffee shop in London. The user is a customer. Your goal is to have a natural, role-playing conversation to take their order. Ask follow-up questions about size, milk, sugar, etc. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
     doctor: "You are a kind and professional doctor (Dr. Smith) in the UK. The user is your patient. Your goal is to have a natural, role-playing conversation to understand their health problem. Ask follow-up questions about their symptoms. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
     picture: "You are a friendly A2 English test examiner. You are having a conversation about a picture of a busy outdoor market. The user will describe it. Your goal is to ask follow-up questions about the people, the setting, and what's happening. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
-    directions: "You are a helpful local person on a street in the UK. The user is a tourist asking for directions. Your goal is to have a natural, role-playing conversation to help them. Give simple, clear, A2-level directions. You can use landmarks like 'the post office' or 'the big clock tower'. Ask clarifying questions. After each user response, you MUST provide a response and structured feedback in the specified JSON format."
+    directions: "You are a helpful local person on a street in the UK. The user is a tourist asking for directions. Your goal is to have a natural, role-playing conversation to help them. Give simple, clear, A2-level directions. You can use landmarks like 'the post office' or 'the big clock tower'. Ask clarifying questions. After each user response, you MUST provide a response and structured feedback in the specified JSON format.",
+    // B1 GESE Grade 5 Conversation Topics
+    'b1-festivals': "You are an examiner for the GESE Grade 5 (B1) test. Your task is to have a conversation about 'Festivals'. Ask open-ended questions about important festivals, how people celebrate, and the user's personal experiences. Keep the conversation at a B1 level and provide feedback in JSON after each user turn.",
+    'b1-transport': "You are an examiner for the GESE Grade 5 (B1) test. Your task is to have a conversation about 'Means of Transport'. Ask open-ended questions about how the user travels, public transport in their area, and advantages/disadvantages of different transport types. Keep the conversation at a B1 level and provide feedback in JSON after each user turn.",
+    'b1-occasions': "You are an examiner for the GESE Grade 5 (B1) test. Your task is to have a conversation about 'Special Occasions'. Ask open-ended questions about family celebrations, birthdays, weddings, and cultural traditions. Keep the conversation at a B1 level and provide feedback in JSON after each user turn.",
+    'b1-entertainment': "You are an examiner for the GESE Grade 5 (B1) test. Your task is to have a conversation about 'Entertainment'. Ask open-ended questions about films, TV, theatre, and what the user does for fun. Keep the conversation at a B1 level and provide feedback in JSON after each user turn.",
+    'b1-music': "You are an examiner for the GESE Grade 5 (B1) test. Your task is to have a conversation about 'Music'. Ask open-ended questions about their favourite types of music, musical instruments, and concerts. Keep the conversation at a B1 level and provide feedback in JSON after each user turn.",
+    'b1-experiences': "You are an examiner for the GESE Grade 5 (B1) test. Your task is to have a conversation about 'Recent Personal Experiences'. Ask open-ended questions about interesting things the user has done recently, their last weekend, or a recent trip. Keep the conversation at a B1 level and provide feedback in JSON after each user turn.",
 };
 
 /**
@@ -965,6 +978,82 @@ ${transcript}
         };
     }
 };
+
+// --- B1 Mock Test Service ---
+
+const b1FinalAssessmentSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overallOutcome: {
+            type: Type.STRING,
+            description: "Provide the final outcome of the test. Must be one of: 'Clear Pass', 'Pass', or 'Fail'."
+        },
+        overallFeedback: {
+            type: Type.STRING,
+            description: "A 2-3 sentence summary of the user's overall performance, highlighting key strengths and the main reason for the final outcome."
+        },
+        communicativeEffectiveness: {
+            type: Type.STRING,
+            description: "Detailed feedback on how well the user communicated, maintained the conversation, and responded to questions. (GESE Grade 5 criteria)"
+        },
+        languageControl: {
+            type: Type.STRING,
+            description: "Detailed feedback on the accuracy and range of grammar and vocabulary used. (GESE Grade 5 criteria)"
+        },
+        pronunciationAndFluency: {
+            type: Type.STRING,
+            description: "Detailed feedback on the user's pronunciation, intonation, fluency, and coherence. (GESE Grade 5 criteria)"
+        }
+    },
+    required: ["overallOutcome", "overallFeedback", "communicativeEffectiveness", "languageControl", "pronunciationAndFluency"]
+};
+
+export const generateB1FinalAssessment = async (history: Message[], topicTitle: string, topicPoints: string): Promise<B1FinalAssessment> => {
+    const transcript = history.map(m => `${m.role}: ${m.text}`).join('\n');
+    const prompt = `You are an expert examiner for the Trinity GESE Grade 5 (B1) English test. The following is a transcript of a mock test.
+Your task is to provide a final, comprehensive assessment based on the official GESE Grade 5 criteria.
+
+**User's Prepared Topic:**
+- Title: "${topicTitle}"
+- Points: ${topicPoints}
+
+**Full Test Transcript:**
+${transcript}
+
+**Assessment Criteria for GESE Grade 5 (B1):**
+- **Communicative effectiveness:** Can the user understand questions, respond relevantly, and maintain the flow of conversation?
+- **Language control:** Does the user use B1-level grammar (e.g., past continuous, present perfect, future tenses, conditionals) and vocabulary accurately?
+- **Pronunciation and Fluency:** Is the user's speech generally intelligible? Can they speak with reasonable fluency without too much hesitation?
+
+Based on the transcript and these criteria, provide a detailed assessment. You MUST respond in the specified JSON format. Determine the final outcome ('Clear Pass', 'Pass', or 'Fail') based on whether the user has demonstrated a consistent B1 level across the criteria.`;
+    
+    try {
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                 responseMimeType: "application/json",
+                 responseSchema: b1FinalAssessmentSchema,
+            }
+        });
+        const jsonString = result.text.trim();
+        const parsed = JSON.parse(jsonString) as B1FinalAssessment;
+        if (!parsed.overallOutcome) {
+            throw new Error("Invalid B1 assessment format from API.");
+        }
+        return parsed;
+    } catch (error) {
+        const errorMessage = getApiErrorMessage(error, "Could not generate B1 assessment.");
+        return {
+            overallOutcome: 'Fail',
+            overallFeedback: errorMessage,
+            communicativeEffectiveness: "Error generating feedback.",
+            languageControl: "Error generating feedback.",
+            pronunciationAndFluency: "Error generating feedback."
+        };
+    }
+};
+
 
 // --- Academic Writing Service ---
 

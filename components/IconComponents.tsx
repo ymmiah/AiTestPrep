@@ -252,3 +252,25 @@ export const PhoneIcon: React.FC<{ className?: string }> = ({ className }) => (
         <path fillRule="evenodd" d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.298-.083.465a7.48 7.48 0 003.358 3.358c.167.081.364.052.465-.083l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z" clipRule="evenodd" />
     </svg>
 );
+
+// New icons for B1 Conversation Topics
+export const MusicIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M12 2.25a.75.75 0 01.75.75v11.256A4.5 4.5 0 1111.25 12v-9a.75.75 0 01.75-.75z" />
+    </svg>
+);
+
+export const FilmIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h15a3 3 0 003-3v-9a3 3 0 00-3-3h-15z" />
+        <path d="M6.75 9.75a.75.75 0 000 1.5h10.5a.75.75 0 000-1.5H6.75z" />
+    </svg>
+);
+
+// Alias GiftIcon for SpecialOccasionIcon
+export const GiftIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M3 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 01.75.75V19.5a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75V5.25z" />
+        <path d="M12 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75zM8.25 12a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" />
+    </svg>
+);

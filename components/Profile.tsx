@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Badge, Theme } from '../types';
 import { updateUserName, updateUserProfile } from '../services/geminiService';
 import SkeletonLoader from './SkeletonLoader';
-import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, BookOpenIcon, ArrowLeftIcon } from './IconComponents';
+import { AcademicCapIcon, CardStackIcon, ChatBubbleIcon, SparklesIcon, PencilIcon, SoundWaveIcon, HeadphonesIcon, BookOpenIcon, ArrowLeftIcon, ClipboardDocumentCheckIcon } from './IconComponents';
 import { useNotification } from '../contexts/NotificationContext';
 
 const iconMap: { [key in Badge['icon']]: React.FC<{ className?: string }> } = {
@@ -218,6 +218,16 @@ const Profile: React.FC<ProfileProps> = ({ theme, setTheme, userProfile: profile
                         <ProfileStatCard title="Vocabulary Learned" value={learnedWordsCount} icon={<CardStackIcon className="w-5 h-5" />} />
                         <ProfileStatCard title="Avg. Pronunciation" value={`${progress.a2.avgPronunciationScore}%`} icon={<SoundWaveIcon className="w-5 h-5" />} />
                         <ProfileStatCard title="Avg. Listening Score" value={`${progress.a2.listeningScore}%`} icon={<HeadphonesIcon className="w-5 h-5" />} />
+                    </div>
+                </div>
+
+                {/* B1 Progress */}
+                <div className="mt-6">
+                    <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">B1 GESE Grade 5 Progress</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <ProfileStatCard title="Practice Sessions" value={progress.b1.sessionsCompleted} icon={<ChatBubbleIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Mock Tests" value={progress.b1.mockTestsCompleted} icon={<ClipboardDocumentCheckIcon className="w-5 h-5" />} />
+                        <ProfileStatCard title="Average Score" value={`${progress.b1.avgScore}%`} icon={<SparklesIcon className="w-5 h-5" />} />
                     </div>
                 </div>
 

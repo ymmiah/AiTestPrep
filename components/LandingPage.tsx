@@ -1,5 +1,5 @@
 import React from 'react';
-import { AcademicCapIcon, SparklesIcon, UserGroupIcon, UserCircleIcon } from './IconComponents';
+import { AcademicCapIcon, SparklesIcon, UserGroupIcon, UserCircleIcon, TicketIcon } from './IconComponents';
 import { View, Theme, Module, UserProfile } from '../types';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -70,12 +70,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectModule, theme, setThe
                             </p>
                         </div>
 
-                        <div className="mt-16 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="mt-16 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
                             <ModuleCard
                                 title="UK Spouse Visa A2 Test Prep"
                                 description="An interactive simulator for the A2 English speaking test, with real-time feedback and gamified learning modules."
                                 icon={<UserGroupIcon className="w-8 h-8"/>}
                                 onClick={() => onSelectModule('a2')}
+                            />
+                             <ModuleCard
+                                title="B1 GESE Grade 5 Test Prep"
+                                description="Prepare for the 10-minute speaking & listening test required for visa extensions, with AI-guided topic and conversation practice."
+                                icon={<TicketIcon className="w-8 h-8"/>}
+                                onClick={() => onSelectModule('b1')}
                             />
                             <ModuleCard
                                 title="IELTS Exam Preparation"

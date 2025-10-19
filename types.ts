@@ -1,6 +1,6 @@
 // FIX: Moved View type here from A2App.tsx to make it globally available and resolve import errors.
 export type View = 'dashboard' | 'simulator' | 'vocabulary' | 'listening' | 'grammar' | 'planner' | 'topicPractice' | 'leaderboard' | 'mockTest' | 'pronunciation';
-export type Module = 'landing' | 'a2' | 'ielts' | 'academic' | 'profile';
+export type Module = 'landing' | 'a2' | 'ielts' | 'academic' | 'profile' | 'b1';
 
 export type Theme = 'light' | 'dark' | 'oceanic';
 
@@ -122,6 +122,11 @@ export interface A2Progress {
     avgPronunciationScore: number;
     listeningScore: number;
 }
+export interface B1Progress {
+    sessionsCompleted: number;
+    avgScore: number;
+    mockTestsCompleted: number;
+}
 export interface IELTSProgress {
     writingTasksCompleted: number;
     avgWritingBand: number;
@@ -147,6 +152,7 @@ export interface UserProfile {
       a2: A2Progress;
       ielts: IELTSProgress;
       academic: AcademicProgress;
+      b1: B1Progress;
   };
   conversationHistory?: {
     [scenario: string]: Message[];
@@ -319,4 +325,13 @@ export interface AcademicFeedback {
 export interface AcademicSource {
     title: string;
     uri: string;
+}
+
+// B1 GESE Grade 5 Types
+export interface B1FinalAssessment {
+    overallOutcome: 'Clear Pass' | 'Pass' | 'Fail';
+    overallFeedback: string;
+    communicativeEffectiveness: string;
+    languageControl: string; // Grammar and Lexis
+    pronunciationAndFluency: string;
 }
